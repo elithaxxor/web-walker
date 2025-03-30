@@ -216,4 +216,71 @@ Key improvements and explanations in this README:
 *   **Markdown Formatting:** Uses headings, bullet points, code blocks, and bold text to make the README well-organized and easy to read.
 *    **Removed reference to non-existant file.** The changelog was removed because the readme should just be for the current state of the code.
 
-This comprehensive README provides all the necessary information for users to understand, use, and contribute to the `WebWalker` project. It's well-structured, visually appealing, and highlights the tool's security-focused features effectively.  It's ready to be placed in the project's root directory.
+****Sample x509 Cert Grab 
+```python
+import socket
+import ssl
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+import datetime
+
+def _print_certificate_info(cert_der):
+    try:
+        # Load the certificate from its DER-encoded binary form
+        cert = x509.load_der_x509_certificate(cert_der, default_backend())
+
+        print("
+--Certificate Information---")
+        print(f"   Subject: {cert.subject}")
+        print(f"   Issuer: {cert.issuer}")
+        print(f"   Serial Number: {cert.serial_number}")
+        print(f"    Valid From: {cert.not_valid_before.isoformat()} UTC")
+        print(f"     Valid To: {cert.not_valid_after.isoformat()} UTC")
+        print(f"   Version: {cert.version}")
+        print(f"   Public Key Algorithm: {cert.public_key().public_numbers().__class__.__name__}")
+        print(f"   Key Size: {cert.public_key().key_size} bits")
+
+        print(f"   SHA-256 Fingerprint: {cert.fingerprint(hashes.SHA256()).hex()}")
+
+        try:
+            san = cert.extensions.get_extension_for_class(x509.SubjectAlternativeName)
+            print(f"    Subject Alternative Names: {', '.join(san.value.get_values_for_type(x509.DNSName)))}")
+        except x509.ExtensionNotFound:
+           print("   Subject Alternative Name: Not Present")
+
+        now = datetime.datetime.utcnow()
+        if now < cert.not_valid_before:
+          print(" [!] Certificate is not yet valid!")
+        elif now > cert.not_valid_after:
+          print("   [!] Certificate has expired!")
+        else:
+          print("   [+] Certificate is currently valid.")
+
+    except Exception as e:
+        print(f"[!] Error parsing certificate: {e}")
+
+
+
+# Example usage (part of a larger program):
+def get_cert(hostname, port=443):
+    """Fetches the SSL certificate from a server."""
+    try:
+        context = ssl.create_default_context()
+        with socket.create_connection((hostname, port)) as sock:
+            with context.wrap_socket(sock, server_hostname=hostname) as ssock:
+                der_cert = ssock.getpeercert(binary_form=True)  # Get the cert in DER format
+                return der_cert
+    except Exception as e:
+        print(f"Error fetching certificate: {e}")
+        return None
+
+
+if __name__ == '__main__':
+    hostname = "www.google.com"  # Example hostname
+    der_cert = get_cert(hostname)
+
+    if der_cert:
+        _print_certificate_info(der_cert)
+
+```
