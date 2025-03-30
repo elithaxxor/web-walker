@@ -284,3 +284,29 @@ if __name__ == '__main__':
         _print_certificate_info(der_cert)
 
 ```
+changelog
+```
+Explanation of Updates:
+
+Add Logging Framework
+Python’s built-in logging module is configured at the start of the script.
+Logs are output to both webwalker.log and the console.
+Modular Code Refactor
+The code is split into dedicated classes: SecurityHTMLParser, CertificateAnalyzer, HTTPClient, LLMAnalyzer, and WebWalker.
+Each class has a clear responsibility: parsing HTML, analyzing certificates, making HTTP requests, advanced text/LLM analysis, and overall browser logic.
+Additional helper functions were added and the main logic was separated for improved clarity.
+Introduce Testing
+A placeholder function run_tests() is introduced to demonstrate how one might test hidden element detection and other edge cases (SSL issues, malicious pages, etc.).
+For actual use, a proper test framework like unittest or pytest is recommended.
+Add Output Formatting
+The function export_analysis_results_to_json() exports the collected analysis data to a JSON file for reporting or GUI/CLI usage.
+Rate-Limiting and Recursive Constraints
+An example constraint max_external_scripts is introduced in the WebWalker class. This limit helps safeguard against abuse or infinite recursion with excessive external scripts.
+Interactive Features
+If the script is run with the --interactive flag, the user can decide whether to fetch external scripts or proceed when the certificate is invalid.
+Additional interactive prompts can be added as required.
+Logging Details
+An assortment of logger.info(), logger.warning(), and logger.error() calls provide granular logs.
+Each exception is captured with exc_info=True for traceback details in the log file.
+```
+
