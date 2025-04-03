@@ -1,3 +1,26 @@
+## SubDomainer v1.0
+"""
+# Basic usage:
+scanner = SubdomainScanner("example.com", "subdomains.txt")
+scanner.run()
+
+# Advanced usage with all options:
+scanner = SubdomainScanner("example.com", "subdomains.txt")
+scanner.set_max_threads(20) \
+    .set_batch_size(100) \
+    .set_verbose(2) \
+    .set_output_file("results.json") \
+    .set_custom_headers({'User-Agent': 'Custom User Agent'}) \
+    .set_verify_ssl(False) \
+    .set_rate_limit(0.5) \
+    .set_proxies({
+        'http': 'http://user:pass@proxy.example.com:8080',
+        'https': 'https://user:pass@proxy.example.com:8080'
+    }) \
+    .run()
+"""
+
+
 ```markdown
 # 🕵️‍♂️ WebWalker: A Security-Focused Web Browser in Python 🛡️
 
