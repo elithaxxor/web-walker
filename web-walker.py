@@ -8,6 +8,9 @@ from cryptography.hazmat.primitives import hashes
 import re
 import logging
 import datetime
+import sys
+import tty
+import termios
 import argparse
 
 # --- Logging Configuration ---
@@ -645,9 +648,6 @@ def main():
         logger.error(f"HTTP Error: {e}")
 
 
-import sys
-import tty
-import termios
 
 
 def wait_for_exit_sequence():
