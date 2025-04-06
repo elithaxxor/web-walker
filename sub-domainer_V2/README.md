@@ -1,407 +1,132 @@
 ---
 
-### Updated `SubdomainScanner` Class with Proxy Credentials Logic
+# SubdomainScanner
 
-Here is the complete `SubdomainScanner` class with the `set_proxies` method updated to include logic for retrieving proxy credentials from environment variables:
-
-```python
-import threading
-import requests
-import time
-import os
-import re
-import json
-import csv
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from colorama import Fore, init
-from tqdm import tqdm
-import validators
-from bs4 import BeautifulSoup
-
-# Initialize colorama for colored output
-init()
-
-# Constants
-MAX_SUBDOMAIN_LENGTH = 63  # Maximum length of a subdomain per RFC 1035
-DEFAULT_VALID_STATUS_CODES = {200, 301, 302}  # Default HTTP status codes for "found" subdomains
-DEFAULT_PROTOCOLS = ["https", "http"]  # Default protocols to try
-
-class SubdomainScanner:
-    def __init__(self, domain, filename=None, subdomains_list=None, timeout=20, 
-                 valid_status_codes=None, protocols=None):
-        """
-        Initialize the SubdomainScanner with the target domain and subdomain source.
-
-        Args:
-            domain (str): Target domain to scan (e.g., "example.com")
-            filename (str, optional): Path to file containing subdomains
-            subdomains_list (list, optional): List of subdomains instead of a file
-            timeout (int): Request timeout in seconds
-            valid_status_codes (set, optional): HTTP status codes considered as "found"
-            protocols (list, optional): Protocols to try (e.g., ["https", "http"])
-
-        Raises:
-            ValueError: If the domain is invalid or no subdomain source is provided
-        """
-        if not validators.domain(domain):
-            raise ValueError(f"Invalid domain: {domain}")
-        self.domain = domain
-        self.filename = filename
-        self.subdomains_list = subdomains_list
-        self.timeout = timeout
-        self.subdomains_found = []
-        self.subdomains_lock = threading.Lock()
-
-        # Colors for output
-        self.R = "\033[91m"  # Red
-        self.Y = "\033[93m"  # Yellow
-        self.G = "\033[92m"  # Green
-        self.C = "\033[96m"  # Cyan
-        self.W = "\033[0m"   # White/Reset
-
-        # Default settings
-        self.max_threads = 10
-        self.batch_size = 50
-        self.proxies = None  # For security, use environment variables for credentials
-        self.verbose = 1  # 0: quiet, 1: normal, 2: verbose
-        self.output_file = None
-        self.custom_headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-        self.verify_ssl = True
-        self.rate_limit_delay = 0  # Seconds between requests
-        self.total_subdomains = 0
-        self.progress_bar = None
-        self.semaphore = None  # For rate limiting across threads
-
-        # Extensibility: Allow custom status codes and protocols
-        self.valid_status_codes = valid_status_codes if valid_status_codes is not None else DEFAULT_VALID_STATUS_CODES
-        self.protocols = protocols if protocols is not None else DEFAULT_PROTOCOLS
-
-    def set_max_threads(self, max_threads):
-        """Set the maximum number of concurrent threads."""
-        self.max_threads = max_threads
-        return self
-
-    def set_batch_size(self, batch_size):
-        """Set the batch size for processing subdomains."""
-        self.batch_size = batch_size
-        return self
-
-    def set_proxies(self, proxies=None):
-        """
-        Set proxies for requests. If proxies are not provided, attempt to retrieve from environment variables.
-
-        Args:
-            proxies (dict, optional): Proxy settings to use. If None, environment variables are checked.
-
-        Environment Variables:
-            HTTPS_PROXY_USER: Proxy username
-            HTTPS_PROXY_PASS: Proxy password
-            HTTPS_PROXY_HOST: Proxy host
-            HTTPS_PROXY_PORT: Proxy port
-
-        Returns:
-            self: For method chaining
-        """
-        if proxies is None:
-            # Attempt to build proxies from environment variables
-            proxy_user = os.environ.get('HTTPS_PROXY_USER')
-            proxy_pass = os.environ.get('HTTPS_PROXY_PASS')
-            proxy_host = os.environ.get('HTTPS_PROXY_HOST')
-            proxy_port = os.environ.get('HTTPS_PROXY_PORT')
-            if proxy_host and proxy_port:
-                # Construct proxy URL if all required variables are present
-                proxy_url = f"https://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}" if proxy_user and proxy_pass else f"https://{proxy_host}:{proxy_port}"
-                self.proxies = {'https': proxy_url}
-            else:
-                self.proxies = None
-        else:
-            self.proxies = proxies
-        return self
-
-    def set_verbose(self, level):
-        """Set verbosity level (0: quiet, 1: normal, 2: verbose)."""
-        self.verbose = level
-        return self
-
-    def set_output_file(self, filename):
-        """Set output file to save results (supports .json and .csv)."""
-        self.output_file = filename
-        return self
-
-    def set_custom_headers(self, headers):
-        """Set custom HTTP headers for requests."""
-        self.custom_headers.update(headers)
-        return self
-
-    def set_verify_ssl(self, verify):
-        """Set whether to verify SSL certificates."""
-        self.verify_ssl = verify
-        return self
-
-    def set_rate_limit(self, delay):
-        """Set delay between requests in seconds and initialize semaphore if needed."""
-        self.rate_limit_delay = delay
-        if delay > 0:
-            self.semaphore = threading.Semaphore(self.max_threads)
-        return self
-
-    def validate_subdomain(self, subdomain):
-        """
-        Validate subdomain format per RFC 1035.
-
-        Returns:
-            bool: True if valid, False otherwise
-        """
-        if not subdomain or len(subdomain) > MAX_SUBDOMAIN_LENGTH:
-            return False
-        if not re.match(r'^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$', subdomain):
-            return False
-        return True
-
-    def _try_protocols(self, subdomain):
-        """Try different protocols for the subdomain and return the first successful response."""
-        for protocol in self.protocols:
-            url = f"{protocol}://{subdomain}.{self.domain}"
-            try:
-                response = requests.get(
-                    url,
-                    timeout=self.timeout,
-                    headers=self.custom_headers,
-                    proxies=self.proxies,
-                    verify=self.verify_ssl
-                )
-                if response.status_code in self.valid_status_codes:
-                    return response
-            except requests.exceptions.Timeout:
-                if self.verbose >= 2:
-                    print(f"{self.R}Timeout for {url}{self.W}")
-            except requests.exceptions.ConnectionError:
-                if self.verbose >= 2:
-                    print(f"{self.R}Connection error for {url}{self.W}")
-            except requests.exceptions.RequestException as e:
-                if self.verbose >= 2:
-                    print(f"{self.R}Request exception for {url}: {str(e)}{self.W}")
-        return None
-
-    def check_subdomain(self, subdomain):
-        """Check if a subdomain exists by sending HTTP/HTTPS requests."""
-        if not self.validate_subdomain(subdomain):
-            if self.verbose >= 2:
-                print(f"{self.R}Invalid subdomain format: {subdomain}{self.W}")
-            return
-
-        # Rate limiting with semaphore
-        if self.semaphore:
-            with self.semaphore:
-                time.sleep(self.rate_limit_delay)
-
-        response = self._try_protocols(subdomain)
-        if response:
-            with self.subdomains_lock:
-                self.subdomains_found.append({
-                    'url': response.url,
-                    'status_code': response.status_code,
-                    'server': response.headers.get('Server', 'Unknown'),
-                    'title': self._extract_title(response.text)
-                })
-                if self.verbose >= 1:
-                    print(f"{Fore.GREEN}Subdomain Found [+]: {response.url} (Status: {response.status_code}){Fore.RESET}")
-        elif self.verbose >= 2:
-            print(f"{Fore.YELLOW}No response from {subdomain}.{self.domain}{Fore.RESET}")
-
-    def _extract_title(self, html):
-        """Extract the title from HTML content using BeautifulSoup."""
-        try:
-            soup = BeautifulSoup(html, 'html.parser')
-            return soup.title.string.strip() if soup.title else "No Title"
-        except Exception:
-            return "No Title"
-
-    def load_subdomains(self):
-        """Load and filter subdomains from file or list."""
-        if self.subdomains_list is not None:
-            subdomains = self.subdomains_list
-        elif self.filename is not None:
-            if not os.path.exists(self.filename):
-                raise FileNotFoundError(f"Subdomain file not found: {self.filename}")
-            with open(self.filename, "r") as file:
-                subdomains = [line.strip() for line in file.readlines() if line.strip()]
-        else:
-            raise ValueError("Either filename or subdomains_list must be provided")
-
-        # Filter invalid subdomains
-        valid_subdomains = [sub for sub in subdomains if self.validate_subdomain(sub)]
-        if self.verbose >= 1 and len(valid_subdomains) < len(subdomains):
-            print(f"{self.Y}Filtered out {len(subdomains) - len(valid_subdomains)} invalid subdomains{self.W}")
-        return valid_subdomains
-
-    def scan(self):
-        """Scan subdomains using threading and return results."""
-        subdomains = self.load_subdomains()
-        self.total_subdomains = len(subdomains)
-
-        if self.verbose >= 1:
-            print(f"{self.Y}Starting subdomain scan for {self.domain} with {self.total_subdomains} subdomains...{self.W}")
-            print(f"{self.Y}Using {self.max_threads} threads{self.W}")
-
-        start_time = time.time()
-
-        with ThreadPoolExecutor(max_workers=self.max_threads) as executor:
-            futures = {executor.submit(self.check_subdomain, sub): sub for sub in subdomains}
-            if self.verbose >= 1:
-                self.progress_bar = tqdm(total=self.total_subdomains, desc="Scanning subdomains", unit="sub")
-            for future in as_completed(futures):
-                future.result()  # Wait for completion
-                if self.progress_bar:
-                    self.progress_bar.update(1)
-
-        if self.progress_bar:
-            self.progress_bar.close()
-
-        end_time = time.time()
-        elapsed_time = end_time - start_time
-
-        return {
-            "subdomains_scanned": self.total_subdomains,
-            "subdomains_found": self.subdomains_found,
-            "elapsed_time": elapsed_time
-        }
-
-    def print_results(self, results):
-        """Print scan results based on verbosity level."""
-        if self.verbose >= 1:
-            print(f"\n{self.C}Scan completed in {results['elapsed_time']:.2f} seconds{self.W}")
-            print(f"{self.G}Subdomains scanned: {results['subdomains_scanned']}{self.W}")
-            print(f"{self.G}Subdomains found: {len(results['subdomains_found'])}{self.W}")
-            for subdomain in results['subdomains_found']:
-                print(f"{self.G}{subdomain['url']} (Status: {subdomain['status_code']}, Title: {subdomain['title']}){self.W}")
-
-    def save_results(self, results):
-        """Save results to a file in JSON or CSV format if output_file is set."""
-        if self.output_file:
-            if self.output_file.endswith('.csv'):
-                # Save as CSV
-                with open(self.output_file, 'w', newline='') as f:
-                    writer = csv.writer(f)
-                    writer.writerow(['URL', 'Status Code', 'Server', 'Title'])
-                    for subdomain in results['subdomains_found']:
-                        writer.writerow([subdomain['url'], subdomain['status_code'], subdomain['server'], subdomain['title']])
-            else:
-                # Save as JSON
-                with open(self.output_file, 'w') as f:
-                    json.dump(results, f, indent=4)
-            if self.verbose >= 1:
-                print(f"{self.Y}Results saved to {self.output_file}{self.W}")
-
-    def run(self):
-        """Run the complete scan process and return results."""
-        results = self.scan()
-        self.print_results(results)
-        self.save_results(results)
-        return results
-
-# Example usage
-if __name__ == "__main__":
-    scanner = SubdomainScanner("example.com", subdomains_list=["www", "mail", "invalid-sub"])
-    scanner.set_max_threads(5).set_verbose(2).set_output_file("results.csv").set_rate_limit(0.1)
-    results = scanner.run()
-```
-
-#### Explanation of `set_proxies` Logic
-- **Purpose**: The `set_proxies` method configures proxy settings for HTTP requests, enhancing security by avoiding hardcoded credentials.
-- **Behavior**:
-  - If `proxies` is provided as an argument, it uses that directly.
-  - If `proxies` is `None`, it checks environment variables:
-    - `HTTPS_PROXY_USER`: Proxy username
-    - `HTTPS_PROXY_PASS`: Proxy password
-    - `HTTPS_PROXY_HOST`: Proxy host
-    - `HTTPS_PROXY_PORT`: Proxy port
-  - If `proxy_host` and `proxy_port` are present, it constructs a proxy URL:
-    - Includes credentials (`proxy_user:proxy_pass@`) if both are provided.
-    - Omits credentials if they are not set.
-  - If insufficient environment variables are provided, `self.proxies` remains `None`.
-- **Security**: Using environment variables ensures sensitive data (like usernames and passwords) is not embedded in the code.
+**SubdomainScanner** is a Python tool designed to efficiently scan and enumerate subdomains of a target domain. It supports multi-threading for faster execution, customizable configurations (e.g., proxies, headers, rate limiting), and detailed output options (e.g., JSON, CSV). This project is ideal for security researchers, penetration testers, and web administrators looking to identify active subdomains.
 
 ---
 
-### Unit Tests for `SubdomainScanner`
+## Features
 
-Below is a basic structure for unit tests using `unittest` and `requests_mock` to verify the functionality of the `SubdomainScanner` class. Save this in a separate file (e.g., `test_subdomain_scanner.py`):
-
-```python
-import unittest
-import requests_mock
-import json
-from subdomain_scanner import SubdomainScanner  # Replace with actual module name
-
-class TestSubdomainScanner(unittest.TestCase):
-    def test_invalid_domain(self):
-        """Test that an invalid domain raises a ValueError."""
-        with self.assertRaises(ValueError):
-            SubdomainScanner("invalid_domain")
-
-    @requests_mock.Mocker()
-    def test_subdomain_check(self, mock):
-        """Test subdomain scanning with mocked HTTP responses."""
-        # Mock responses for subdomains
-        mock.get("https://www.example.com", text="<html><title>Test Title</title></html>", status_code=200)
-        mock.get("https://mail.example.com", status_code=404)
-        
-        scanner = SubdomainScanner("example.com", subdomains_list=["www", "mail"])
-        results = scanner.run()
-        
-        self.assertEqual(len(results['subdomains_found']), 1)
-        self.assertEqual(results['subdomains_found'][0]['url'], "https://www.example.com")
-        self.assertEqual(results['subdomains_found'][0]['title'], "Test Title")
-
-    def test_output_file(self):
-        """Test saving results to a JSON file."""
-        scanner = SubdomainScanner("example.com", subdomains_list=["www"])
-        scanner.set_output_file("test_results.json")
-        # Simulate scan results
-        scanner.subdomains_found = [{'url': 'https://www.example.com', 'status_code': 200, 'server': 'Apache', 'title': 'Test'}]
-        scanner.save_results({'subdomains_found': scanner.subdomains_found})
-        
-        with open("test_results.json", 'r') as f:
-            data = json.load(f)
-            self.assertIn('subdomains_found', data)
-            self.assertEqual(len(data['subdomains_found']), 1)
-            self.assertEqual(data['subdomains_found'][0]['url'], "https://www.example.com")
-
-if __name__ == '__main__':
-    unittest.main()
-```
-
-#### Explanation of Unit Tests
-1. **`test_invalid_domain`**:
-   - **Purpose**: Verifies that an invalid domain (e.g., "invalid_domain") raises a `ValueError`.
-   - **How**: Uses `assertRaises` to check for the exception.
-
-2. **`test_subdomain_check`**:
-   - **Purpose**: Tests the subdomain scanning functionality with mocked HTTP responses.
-   - **How**:
-     - Uses `requests_mock` to simulate responses:
-       - `https://www.example.com` returns a 200 status with a title.
-       - `https://mail.example.com` returns a 404 status.
-     - Checks that only the valid subdomain (`www`) is recorded in the results.
-
-3. **`test_output_file`**:
-   - **Purpose**: Ensures results are correctly saved to a JSON file.
-   - **How**:
-     - Simulates a scan result and saves it to `test_results.json`.
-     - Reads the file and verifies the content matches the expected output.
-
-#### Running the Tests
-- Ensure `requests_mock` is installed (`pip install requests-mock`).
-- Place the test file in the same directory as `subdomain_scanner.py`.
-- Run with `python test_subdomain_scanner.py`.
+- **Multi-threaded Scanning**: Leverage concurrent threads to speed up subdomain enumeration.
+- **Protocol Fallback**: Automatically tries HTTPS and HTTP protocols for each subdomain.
+- **Customizable Configuration**:
+  - Set maximum threads, batch sizes, and rate limits.
+  - Use proxies with credentials securely retrieved from environment variables.
+  - Define custom HTTP headers and SSL verification settings.
+- **Input Validation**: Ensures the target domain and subdomains are valid before scanning.
+- **Detailed Output**:
+  - Console output with color-coded results and a progress bar.
+  - Save results to JSON or CSV files.
+- **Extensibility**: Supports custom HTTP status codes and protocols.
+- **Error Handling**: Gracefully manages timeouts, connection errors, and invalid inputs.
+- **Unit Tests**: Includes a basic test suite for verifying core functionality.
 
 ---
 
-### Summary
-- **Proxy Credentials**: The `set_proxies` method now retrieves credentials from environment variables (`HTTPS_PROXY_USER`, `HTTPS_PROXY_PASS`, `HTTPS_PROXY_HOST`, `HTTPS_PROXY_PORT`) if no proxies are provided, enhancing security.
-- **Testing**: A basic suite of unit tests using `unittest` and `requests_mock` verifies domain validation, subdomain scanning, and file output functionality.
+## Installation
 
-This implementation fills in the previously commented sections, making the `SubdomainScanner` class more robust, secure, and testable.
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/yourusername/SubdomainScanner.git
+   cd SubdomainScanner
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+   The `requirements.txt` should include:
+   ```
+   requests
+   colorama
+   tqdm
+   validators
+   beautifulsoup4
+   requests-mock  # For testing
+   ```
+
+3. **Set environment variables (optional)**:
+   - For proxy credentials:
+     ```bash
+     export HTTPS_PROXY_USER='your_username'
+     export HTTPS_PROXY_PASS='your_password'
+     export HTTPS_PROXY_HOST='proxy.example.com'
+     export HTTPS_PROXY_PORT='8080'
+     ```
+
+---
+
+## Usage
+
+### Basic Usage
+Scan subdomains using a list:
+```python
+from subdomain_scanner import SubdomainScanner
+
+scanner = SubdomainScanner("example.com", subdomains_list=["www", "mail", "ftp"])
+scanner.run()
+```
+
+### Advanced Usage
+Customize the scan with additional options:
+```python
+scanner = SubdomainScanner(
+    "example.com",
+    filename="subdomains.txt",
+    timeout=10,
+    valid_status_codes={200, 403},
+    protocols=["https"]
+)
+scanner.set_max_threads(20)\
+       .set_verbose(2)\
+       .set_output_file("results.json")\
+       .set_rate_limit(0.5)\
+       .set_proxies()  # Uses environment variables if not provided
+results = scanner.run()
+```
+
+### Command-Line Interface (CLI)
+While the current version is a Python class, you can extend it to a CLI tool using libraries like `argparse` for easier usage.
+
+---
+
+## Differences from the Original Version
+
+The new version of `SubdomainScanner` includes several enhancements and improvements over the original implementation. Below is a comparison table highlighting the key differences:
+
+| **Feature**                 | **Original Version**                           | **New Version**                                      |
+|-----------------------------|------------------------------------------------|------------------------------------------------------|
+| **Input Validation**        | Basic validation for subdomains                | Enhanced validation for both domain and subdomains   |
+| **Error Handling**          | Generic exception handling                     | Specific handling for timeouts, connection errors    |
+| **Performance**             | Batch-based processing                         | Processes results as they complete for faster feedback |
+| **Rate Limiting**           | Simple delay per request                       | Semaphore-based rate limiting across threads         |
+| **Proxy Support**           | Hardcoded or manually set proxies              | Retrieves proxy credentials from environment variables |
+| **Output Formats**          | Only JSON or plain text                        | Supports JSON and CSV formats                        |
+| **Progress Feedback**       | Batch-level progress bar                       | Granular progress bar per subdomain                  |
+| **Title Extraction**        | Regex-based title extraction                   | Uses `BeautifulSoup` for reliable HTML parsing       |
+| **Extensibility**           | Fixed status codes and protocols               | Customizable status codes and protocols              |
+| **Security**                | No specific security measures                  | Avoids hardcoded credentials; uses environment variables |
+| **Testing**                 | No tests provided                              | Includes a basic unit test suite                     |
+
+These improvements make the new version more robust, efficient, and secure, while also providing a better user experience and greater flexibility for advanced use cases.
+
+---
+
+## Contributing
+
+Contributions are welcome! Please follow these steps:
+1. Fork the repository.
+2. Create a new branch (`git checkout -b feature-branch`).
+3. Commit your changes (`git commit -m 'Add new feature'`).
+4. Push to the branch (`git push origin feature-branch`).
+5. Open a pull request.
+
+---
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+---
