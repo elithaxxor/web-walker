@@ -7,15 +7,12 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 
-# Set up logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-# Constants
 CONNECTION_TIMEOUT = 5
 MAX_REDIRECTS = 5
 
-# Custom exceptions
 class HTTPError(Exception):
     pass
 
@@ -27,7 +24,7 @@ class WebPageFetcher:
         self.cookies = {}
 
     def fetch_page(self, url, show_cert=False, verify_ssl=True, redirect_count=0):
-        """Fetch a web page, handling HTTP/HTTPS, redirects, and SSL verification."""
+        """Fetch a webpage with SSL support and redirect handling."""
         if redirect_count >= MAX_REDIRECTS:
             logger.error(f"Maximum redirects ({MAX_REDIRECTS}) exceeded.")
             raise HTTPError("Too many redirects")
@@ -71,7 +68,7 @@ class WebPageFetcher:
             raise ConnectionError(f"Error fetching page: {e}")
 
     def _parse_url(self, url):
-        """Parse a URL into its HTTPS status, hostname, and path components."""
+        """Parse URL into components."""
         if url.startswith("http://"):
             return False, url[7:].split("/")[0], "/" + url[7:].split("/", 1)[1] if "/" in url[7:] else "/"
         elif url.startswith("https://"):
@@ -80,7 +77,7 @@ class WebPageFetcher:
             return True, url.split("/")[0], "/" + url.split("/", 1)[1] if "/" in url else "/"
 
     def _send_request(self, conn, hostname, path):
-        """Send an HTTP GET request to the server."""
+        """Send an HTTP request."""
         headers = [
             f"GET {path} HTTP/1.1",
             f"Host: {hostname}",
@@ -98,7 +95,7 @@ class WebPageFetcher:
         return response
 
     def _process_response(self, response):
-        """Process the HTTP response, extracting status code, headers, content type, and body."""
+        """Process the HTTP response."""
         response_str = response.decode(errors="ignore")
         header_part, body = response_str.split("\r\n\r\n", 1) if "\r\n\r\n" in response_str else (response_str, "")
         headers = {}
@@ -112,12 +109,12 @@ class WebPageFetcher:
         return status_code, headers, content_type, body
 
     def _print_certificate_info(self, cert_der):
-        """Display SSL certificate information."""
+        """Display SSL certificate details."""
         cert = x509.load_der_x509_certificate(cert_der, default_backend())
         logger.info(f"Certificate: Subject={cert.subject}, Issuer={cert.issuer}, Valid From={cert.not_valid_before}")
 
     async def fetch_external_resource(self, url, session, retries=3):
-        """Asynchronously fetch an external resource with retries."""
+        """Asynchronously fetch an external resource."""
         for attempt in range(retries):
             try:
                 async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as response:
@@ -129,14 +126,14 @@ class WebPageFetcher:
                     raise ConnectionError(f"Failed to fetch {url} after {retries} attempts")
 
     def _resolve_url(self, hostname, path, link, is_https):
-        """Resolve a relative URL to an absolute URL."""
+        """Resolve relative URLs to absolute."""
         if link.startswith("http"):
             return link
         base = f"https://{hostname}" if is_https else f"http://{hostname}"
         return f"{base}{link}" if link.startswith("/") else f"{base}{path}/{link}"
 
     def detect_database(self, headers, html):
-        """Detect potential database usage in headers and HTML content."""
+        """Detect database signatures."""
         db_signatures = {
             "MySQL": ["mysql", "mysqli"],
             "PostgreSQL": ["postgres", "pgsql"],
