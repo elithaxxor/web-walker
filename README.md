@@ -1,4 +1,6 @@
 ## SubDomainer v1.0
+```markdown
+# Example usage:
 """
 # Basic usage:
 scanner = SubdomainScanner("example.com", "subdomains.txt")
@@ -19,8 +21,7 @@ scanner.set_max_threads(20) \
     }) \
     .run()
 """
-
-
+```
 ```markdown
 # 🕵️‍♂️ WebWalker: A Security-Focused Web Browser in Python 🛡️
 
