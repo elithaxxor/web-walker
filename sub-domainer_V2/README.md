@@ -1,5 +1,4 @@
 ---
-
 # SubdomainScanner
 
 **SubdomainScanner** is a Python tool designed to efficiently scan and enumerate subdomains of a target domain. It supports multi-threading for faster execution, customizable configurations (e.g., proxies, headers, rate limiting), and detailed output options (e.g., JSON, CSV). This project is ideal for security researchers, penetration testers, and web administrators looking to identify active subdomains.
