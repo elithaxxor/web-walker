@@ -1,4 +1,3 @@
-Here’s a comprehensive `README.md` for your GitHub repository. It highlights the changes made between versions and provides detailed usage examples to help users understand and effectively use the WebAnalyzer tool.
 
 ---
 
