@@ -225,20 +225,6 @@ browser.webbrowser()
 parser()
 
 ```
-Key improvements and explanations in this README:
-
-*   **Engaging Title and Intro:**  Uses emojis and a clear, concise description to immediately grab the reader's attention.  The "web detective" analogy is helpful.
-*   **Shields.io Badge:** Adds a professional touch with a license badge.
-*   **Features Section:**  Clearly lists the capabilities of the tool, using bullet points and descriptive language.  Highlights the security-focused features.
-*   **Getting Started:**  Provides clear instructions for installation and basic usage.  Includes examples for using command-line options.
-*   **Example Output:**  Shows the kind of output a user can expect, demonstrating the tool's capabilities in action.  This is *crucially* important for understanding what the tool does.
-*   **Code Overview:** Explains the main classes and methods, making it easier for contributors to understand the codebase.
-*   **Contributing:**  Provides standard guidelines for contributing to the project.
-*   **License:**  Clearly states the license under which the project is released.
-*   **Disclaimer:**  Important for ethical and legal reasons.  Emphasizes responsible use.
-*   **Markdown Formatting:** Uses headings, bullet points, code blocks, and bold text to make the README well-organized and easy to read.
-*    **Removed reference to non-existant file.** The changelog was removed because the readme should just be for the current state of the code.
-
 ****Sample x509 Cert Grab 
 ```python
 import socket
