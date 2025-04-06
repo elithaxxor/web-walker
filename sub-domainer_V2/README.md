@@ -1,29 +1,95 @@
----
-# SubdomainScanner
+```markdown
+# 🔍 SubdomainScanner
 
-**SubdomainScanner** is a Python tool designed to efficiently scan and enumerate subdomains of a target domain. It supports multi-threading for faster execution, customizable configurations (e.g., proxies, headers, rate limiting), and detailed output options (e.g., JSON, CSV). This project is ideal for security researchers, penetration testers, and web administrators looking to identify active subdomains.
+<div align="center">
 
----
+![SubdomainScanner Banner](https://via.placeholder.com/1200x300/0d1117/38b0de?text=🔍+SubdomainScanner)
 
-## Features
+[![Python](https://img.shields.io/badge/Python-3.7%2B-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=for-the-badge)](CONTRIBUTING.md)
+[![Stars](https://img.shields.io/github/stars/yourusername/SubdomainScanner?style=for-the-badge&logo=github)](https://github.com/yourusername/SubdomainScanner/stargazers)
 
-- **Multi-threaded Scanning**: Leverage concurrent threads to speed up subdomain enumeration.
-- **Protocol Fallback**: Automatically tries HTTPS and HTTP protocols for each subdomain.
-- **Customizable Configuration**:
-  - Set maximum threads, batch sizes, and rate limits.
-  - Use proxies with credentials securely retrieved from environment variables.
-  - Define custom HTTP headers and SSL verification settings.
-- **Input Validation**: Ensures the target domain and subdomains are valid before scanning.
-- **Detailed Output**:
-  - Console output with color-coded results and a progress bar.
-  - Save results to JSON or CSV files.
-- **Extensibility**: Supports custom HTTP status codes and protocols.
-- **Error Handling**: Gracefully manages timeouts, connection errors, and invalid inputs.
-- **Unit Tests**: Includes a basic test suite for verifying core functionality.
+**Discover the digital footprint of any domain with blazing speed and precision**
+
+</div>
+
+<p align="center">
+<b>SubdomainScanner</b> is a high-performance Python tool for discovering and analyzing subdomains with multi-threaded scanning capabilities, advanced protocol detection, and comprehensive output formats.
+</p>
 
 ---
 
-## Installation
+## 📋 Table of Contents
+
+- [✨ Features](#-features)
+- [🚀 Installation](#-installation)
+- [💻 Usage](#-usage)
+- [🔄 Input & Output](#-input--output)
+- [⚙️ Advanced Configuration](#️-advanced-configuration)
+- [📊 Comparison](#-comparison)
+- [🤝 Contributing](#-contributing)
+- [📜 License](#-license)
+
+---
+
+## ✨ Features
+
+<div align="center">
+
+```mermaid
+graph TD
+    A[SubdomainScanner] --> B[Multi-threaded Scanning]
+    A --> C[Protocol Detection]
+    A --> D[Customization]
+    A --> E[Output Options]
+    
+    B --> B1[Parallel Processing]
+    B --> B2[Semaphore-based Rate Limiting]
+    
+    C --> C1[HTTPS/HTTP Fallback]
+    C --> C2[Custom Protocol Support]
+    
+    D --> D1[Proxy Configuration]
+    D --> D2[Custom Headers]
+    D --> D3[Status Code Filtering]
+    
+    E --> E1[Console Output]
+    E --> E2[JSON Export]
+    E --> E3[CSV Export]
+```
+
+</div>
+
+### 🚄 Performance
+- **⚡ Multi-threaded Architecture**: Scan hundreds of subdomains in seconds
+- **🔄 Adaptive Batch Processing**: Optimizes resource usage during scanning
+- **⏱️ Configurable Rate Limiting**: Prevent triggering security measures
+
+### 🔒 Security Features
+- **🔐 Secure Proxy Integration**: Environment variable-based credential management
+- **🧪 Custom Header Support**: Mimic legitimate browser traffic
+- **🛡️ SSL Verification Options**: Handle self-signed certificates
+
+### 📊 Smart Analysis
+- **🔍 Protocol Fallback**: Automatically tests HTTPS then HTTP
+- **📝 Title Extraction**: Uses BeautifulSoup for reliable HTML parsing
+- **🚦 Status Code Filtering**: Customize which responses count as "valid"
+
+### 📦 Output & Reporting
+- **🎨 Color-Coded Console Output**: Instantly visualize results
+- **📈 Live Progress Tracking**: Real-time scanning progress
+- **💾 Multiple Export Formats**: JSON and CSV export options
+
+---
+
+## 🚀 Installation
+
+### Prerequisites
+- Python 3.7+
+- pip package manager
+
+### Quick Setup
 
 1. **Clone the repository**:
    ```bash
@@ -36,96 +102,283 @@
    pip install -r requirements.txt
    ```
 
-   The `requirements.txt` should include:
-   ```
-   requests
-   colorama
-   tqdm
-   validators
-   beautifulsoup4
-   requests-mock  # For testing
-   ```
+<details>
+<summary>📋 View requirements.txt contents</summary>
 
-3. **Set environment variables (optional)**:
-   - For proxy credentials:
-     ```bash
-     export HTTPS_PROXY_USER='your_username'
-     export HTTPS_PROXY_PASS='your_password'
-     export HTTPS_PROXY_HOST='proxy.example.com'
-     export HTTPS_PROXY_PORT='8080'
-     ```
+```
+requests>=2.25.1
+colorama>=0.4.4
+tqdm>=4.62.3
+validators>=0.18.2
+beautifulsoup4>=4.10.0
+requests-mock>=1.9.3  # For testing
+```
+</details>
+
+### 🔐 Environment Setup (Optional)
+
+For secure proxy usage, set these environment variables:
+
+```bash
+# For Linux/macOS
+export HTTPS_PROXY_USER='your_username'
+export HTTPS_PROXY_PASS='your_password'
+export HTTPS_PROXY_HOST='proxy.example.com'
+export HTTPS_PROXY_PORT='8080'
+
+# For Windows
+setx HTTPS_PROXY_USER "your_username"
+setx HTTPS_PROXY_PASS "your_password"
+setx HTTPS_PROXY_HOST "proxy.example.com"
+setx HTTPS_PROXY_PORT "8080"
+```
+
+> 💡 **Pro Tip**: Use a `.env` file with python-dotenv for easier management of environment variables.
 
 ---
 
-## Usage
+## 💻 Usage
 
-### Basic Usage
-Scan subdomains using a list:
+### 🔰 Basic Usage
+
 ```python
 from subdomain_scanner import SubdomainScanner
 
-scanner = SubdomainScanner("example.com", subdomains_list=["www", "mail", "ftp"])
+# Initialize with a list of subdomains
+scanner = SubdomainScanner("example.com", subdomains_list=["www", "mail", "api", "ftp"])
+results = scanner.run()
+
+# Print discovered subdomains
+for subdomain, data in results.items():
+    print(f"{subdomain}: {data['status']} - {data['title']}")
+```
+
+### 📚 Using a Wordlist File
+
+```python
+# Initialize with a wordlist file
+scanner = SubdomainScanner(
+    "example.com",
+    filename="wordlists/common-subdomains-5000.txt"
+)
 scanner.run()
 ```
 
-### Advanced Usage
-Customize the scan with additional options:
+### 🌟 Advanced Example
+
 ```python
 scanner = SubdomainScanner(
-    "example.com",
-    filename="subdomains.txt",
-    timeout=10,
-    valid_status_codes={200, 403},
-    protocols=["https"]
+    target_domain="example.com",
+    filename="wordlists/comprehensive.txt",
+    timeout=5,                              # 5-second timeout per request
+    valid_status_codes={200, 201, 204, 403},  # Consider these status codes valid
+    protocols=["https", "http"]             # Try HTTPS first, then HTTP
 )
-scanner.set_max_threads(20)\
+
+# Chain configuration methods
+scanner.set_max_threads(30)\
        .set_verbose(2)\
-       .set_output_file("results.json")\
-       .set_rate_limit(0.5)\
-       .set_proxies()  # Uses environment variables if not provided
+       .set_batch_size(50)\
+       .set_output_file("results.json", format="json")\
+       .set_rate_limit(0.5)\    # Half-second delay between requests
+       .set_headers({           # Custom headers
+           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+           "Accept-Language": "en-US,en;q=0.9"
+       })\
+       .set_proxies({
+           "https": "https://proxy.example.com:8080"
+       })
+
+# Execute the scan
 results = scanner.run()
+
+# Process results
+active_subdomains = [subdomain for subdomain, data in results.items() 
+                    if data["status_code"] in scanner.valid_status_codes]
+print(f"Found {len(active_subdomains)} active subdomains")
 ```
 
-### Command-Line Interface (CLI)
-While the current version is a Python class, you can extend it to a CLI tool using libraries like `argparse` for easier usage.
+---
+
+## 🔄 Input & Output
+
+### 📥 Input Options
+
+| Method | Description | Example |
+|--------|-------------|---------|
+| **List** | Provide a Python list of subdomains | `subdomains_list=["www", "mail", "admin"]` |
+| **File** | Path to a text file with one subdomain per line | `filename="subdomains.txt"` |
+| **Mixed** | Combine both methods for comprehensive scanning | Use both parameters together |
+
+<details>
+<summary>📄 Example Wordlist Format</summary>
+
+```
+www
+mail
+ftp
+admin
+blog
+shop
+api
+dev
+stage
+test
+```
+</details>
+
+### 📤 Output Formats
+
+#### Terminal Output
+
+<div align="center">
+
+![Terminal Output](https://via.placeholder.com/800x400/0d1117/38b0de?text=Live+Terminal+Output+with+Progress+Bar)
+
+</div>
+
+#### JSON Output
+
+```json
+{
+  "www.example.com": {
+    "url": "https://www.example.com",
+    "status_code": 200,
+    "title": "Example Domain",
+    "ip": "93.184.216.34",
+    "content_type": "text/html; charset=UTF-8",
+    "response_time": 0.342
+  },
+  "api.example.com": {
+    "url": "https://api.example.com",
+    "status_code": 403,
+    "title": "Forbidden",
+    "ip": "93.184.216.34", 
+    "content_type": "application/json",
+    "response_time": 0.156
+  }
+}
+```
+
+#### CSV Output
+
+```csv
+subdomain,url,status_code,title,ip,content_type,response_time
+www.example.com,https://www.example.com,200,"Example Domain",93.184.216.34,text/html; charset=UTF-8,0.342
+api.example.com,https://api.example.com,403,Forbidden,93.184.216.34,application/json,0.156
+```
 
 ---
 
-## Differences from the Original Version
+## ⚙️ Advanced Configuration
 
-The new version of `SubdomainScanner` includes several enhancements and improvements over the original implementation. Below is a comparison table highlighting the key differences:
+### 🧰 Configuration Methods
 
-| **Feature**                 | **Original Version**                           | **New Version**                                      |
-|-----------------------------|------------------------------------------------|------------------------------------------------------|
-| **Input Validation**        | Basic validation for subdomains                | Enhanced validation for both domain and subdomains   |
-| **Error Handling**          | Generic exception handling                     | Specific handling for timeouts, connection errors    |
-| **Performance**             | Batch-based processing                         | Processes results as they complete for faster feedback |
-| **Rate Limiting**           | Simple delay per request                       | Semaphore-based rate limiting across threads         |
-| **Proxy Support**           | Hardcoded or manually set proxies              | Retrieves proxy credentials from environment variables |
-| **Output Formats**          | Only JSON or plain text                        | Supports JSON and CSV formats                        |
-| **Progress Feedback**       | Batch-level progress bar                       | Granular progress bar per subdomain                  |
-| **Title Extraction**        | Regex-based title extraction                   | Uses `BeautifulSoup` for reliable HTML parsing       |
-| **Extensibility**           | Fixed status codes and protocols               | Customizable status codes and protocols              |
-| **Security**                | No specific security measures                  | Avoids hardcoded credentials; uses environment variables |
-| **Testing**                 | No tests provided                              | Includes a basic unit test suite                     |
+| Method | Description | Default |
+|--------|-------------|---------|
+| `set_max_threads(n)` | Set maximum concurrent threads | 10 |
+| `set_batch_size(n)` | Number of subdomains per batch | 50 |
+| `set_verbose(level)` | Verbosity level (0-3) | 1 |
+| `set_output_file(filename, format)` | Save results to file | None, "json" |
+| `set_rate_limit(delay)` | Seconds between requests | 0 (no limit) |
+| `set_proxies(proxy_dict)` | Set proxy configuration | None |
+| `set_headers(headers_dict)` | Set custom HTTP headers | Default User-Agent |
+| `set_ssl_verify(verify)` | Enable/disable SSL verification | True |
 
-These improvements make the new version more robust, efficient, and secure, while also providing a better user experience and greater flexibility for advanced use cases.
+### 🛡️ Proxy Configuration
+
+```python
+# Manual configuration
+scanner.set_proxies({
+    "http": "http://user:pass@proxy.example.com:8080",
+    "https": "https://user:pass@proxy.example.com:8080"
+})
+
+# Using environment variables (more secure)
+scanner.set_proxies()  # Automatically uses environment variables
+```
+
+### 🔍 Custom Status Codes
+
+```python
+# Only consider these status codes as valid findings
+scanner.valid_status_codes = {200, 201, 301, 302, 403}
+
+# Include additional status codes for special cases
+scanner.valid_status_codes.add(401)  # Add authentication required
+```
 
 ---
 
-## Contributing
+## 📊 Comparison
 
-Contributions are welcome! Please follow these steps:
-1. Fork the repository.
-2. Create a new branch (`git checkout -b feature-branch`).
-3. Commit your changes (`git commit -m 'Add new feature'`).
-4. Push to the branch (`git push origin feature-branch`).
-5. Open a pull request.
+### 🔄 Version Comparison
+
+<div align="center">
+
+| **Feature** | **Original Version** | **Enhanced Version** |
+|-------------|----------------------|----------------------|
+| **Performance** | ⭐⭐ | ⭐⭐⭐⭐⭐ |
+| **Input Validation** | Basic | Comprehensive |
+| **Error Handling** | Generic | Specific & Robust |
+| **Rate Limiting** | Simple delay | Semaphore-based |
+| **Proxy Support** | Basic | Secure & Environment-based |
+| **Output Formats** | Limited | Multiple formats |
+| **Progress Feedback** | Batch-level | Per-subdomain |
+| **Title Extraction** | Regex-based | BeautifulSoup HTML parsing |
+| **Extensibility** | Fixed parameters | Fully customizable |
+| **Security** | Hardcoded credentials | Environment variables |
+| **Testing** | None | Unit test suite |
+
+</div>
+
+### 🏆 Key Improvements
+
+- **🚄 Processing Algorithm**: Results processed as they complete instead of waiting for batch completion
+- **🔒 Security Enhancements**: No hardcoded credentials, proper environment variable usage
+- **🧩 Modular Design**: More extensible codebase with better separation of concerns
+- **📊 Better Reporting**: Rich console output with detailed progress information
+- **🧪 Testing Framework**: Added unit tests for reliable code quality
 
 ---
 
-## License
+## 🤝 Contributing
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+Contributions make the open-source community thrive! We welcome all contributions to improve SubdomainScanner.
+
+### 🔄 Contribution Process
+
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
+3. **Commit** your changes (`git commit -m 'Add some amazing feature'`)
+4. **Push** to the branch (`git push origin feature/amazing-feature`)
+5. **Open** a Pull Request
+
+### 💡 Development Ideas
+
+- Command-line interface using `argparse` or `click`
+- Additional output formats (HTML, XML)
+- Integration with other security tools (Nmap, Nuclei)
+- Enhanced reporting with visualization
+
+<details>
+<summary>📝 Code Style Guidelines</summary>
+
+- Follow PEP 8 style guide
+- Add docstrings to all functions and classes
+- Include type hints where appropriate
+- Write tests for new functionality
+</details>
+
 
 ---
+
+<div align="center">
+
+**[Documentation](https://github.com/yourusername/SubdomainScanner/wiki)** |
+**[Report Bug](https://github.com/yourusername/SubdomainScanner/issues)** |
+**[Request Feature](https://github.com/yourusername/SubdomainScanner/issues)**
+
+
+</div>
+```
