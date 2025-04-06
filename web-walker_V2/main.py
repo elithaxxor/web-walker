@@ -6,6 +6,7 @@ from analyzer import WebPageAnalyzer
 logger = logging.getLogger(__name__)
 
 def main():
+    """Main function to run the web analyzer."""
     parser = argparse.ArgumentParser(description="Web Analyzer")
     parser.add_argument("--url", help="URL to analyze")
     parser.add_argument("--show-cert", action="store_true", help="Show SSL certificate")
