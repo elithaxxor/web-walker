@@ -56,8 +56,8 @@ class SecurityHTMLParser(HTMLParser):
         for pattern in self.get_suspicious_patterns():
             print(f"- {pattern}")
 
-# Example usage
-if __name__ == "__main__":
+def main():
+    """Main function to run the parser as a standalone script."""
     parser = SecurityHTMLParser()
     html_content = """
     <html>
@@ -72,3 +72,6 @@ if __name__ == "__main__":
     """
     parser.feed(html_content)
     parser.display_results()
+
+if __name__ == "__main__":
+    main()
