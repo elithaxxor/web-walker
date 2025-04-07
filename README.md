@@ -664,37 +664,16 @@ Please make sure your code follows our style guidelines and includes appropriate
 
 ---
 
-## 📚 Resources
-
-### Related Projects
-
-- [**OWASP ZAP**](https://www.zaproxy.org/) - An open-source web application security scanner
-- [**mitmproxy**](https://mitmproxy.org/) - An interactive HTTPS proxy
-- [**SSLyze**](https://github.com/nabla-c0d3/sslyze) - Fast and powerful SSL/TLS server scanning library
-
-### Learning Resources
-
-- [**OWASP Top 10**](https://owasp.org/www-project-top-ten/) - Standard awareness document for web application security
-- [**Mozilla Web Security Guidelines**](https://infosec.mozilla.org/guidelines/web_security) - Web security guidelines by Mozilla
-- [**HuggingFace Documentation**](https://huggingface.co/docs) - Documentation for the Transformers library
-
----
-
-## 👥 Community
-
-- **Bug Reports & Feature Requests**: Please use the [issue tracker](https://github.com/yourusername/webwalker/issues)
-- **Discussions**: Join our [Discord server](https://discord.gg/yourserver) for community discussions
-- **Twitter**: Follow [@webwalker](https://twitter.com/webwalker) for project updates
-
----
-
 ## 📄 License
 
-<div align="center">
-    
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+<div> 
+<p align="center">
+⚠️ Disclaimer
 
-<b>Made with ❤️ by [Your Name]</b>
+This tool is intended for security professionals to perform authorized security assessments only. Unauthorized scanning of networks may violate local, state, and federal laws. The author is not responsible for misuse or damage caused by this tool.
+
+@copyleft my mistakes yours. feel free to incorporate it into your work. however, I'm not responsible for your actions. do not be unethical. do not harm others. do the right thing.
+</p>
 
 </div>
 
@@ -874,10 +853,19 @@ Contributions are welcome!  Please follow these guidelines:
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## ⚠️ Disclaimer
-
-This tool is intended for educational and security research purposes.  Use it responsibly and ethically.  The developers are not responsible for any misuse of this software.  Be aware that accessing websites without permission may be illegal in your jurisdiction.
 ```
+
+<div> 
+<p align="center">
+⚠️ Disclaimer
+
+This tool is intended for security professionals to perform authorized security assessments only. Unauthorized scanning of networks may violate local, state, and federal laws. The author is not responsible for misuse or damage caused by this tool.
+
+@copyleft my mistakes yours. feel free to incorporate it into your work. however, I'm not responsible for your actions. do not be unethical. do not harm others. do the right thing.
+</p>
+
+</div>
+
 
 #### Skelaton Skript. 
 ```python
