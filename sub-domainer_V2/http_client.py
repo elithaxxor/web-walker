@@ -91,6 +91,6 @@ if __name__ == "__main__":
     client = HTTPClient(timeout=10)
     status, content, cert = client.request("https://example.com", show_cert=True)
     print(f"Status: {status}")
-    print(f"Content: {content[:200]}...")  # Print only the first 200 characters of the content
+    print(f"Content: {content[:400]}...")  # Print only the first 400 characters of the content
     if cert:
-        print(f"Certificate: {cert[:100]}...")  # Print only the first 100 bytes of the certificate
+        print(f"Certificate: {cert[:300]}...")  # Print only the first 300 bytes of the certificate
