@@ -382,3 +382,214 @@ Contributions make the open-source community thrive! We welcome all contribution
 
 </div>
 ```
+# V 2.1 
+Below is an updated `README.md` for the `SubdomainScanner` project, complete with detailed verbose usage instructions to guide both new and advanced users in utilizing the tool effectively.
+
+---
+
+# SubdomainScanner
+
+**SubdomainScanner** is a Python-based tool designed to efficiently enumerate and scan subdomains of a target domain. It offers multi-threaded scanning, customizable configurations (such as proxies, headers, and rate limits), and versatile output options (including JSON, CSV, and HTML reports). This tool is perfect for security researchers, penetration testers, and web administrators who need to identify active subdomains quickly and reliably.
+
+---
+
+## Features
+
+- **Multi-threaded Scanning**: Speeds up enumeration with concurrent threads.
+- **Protocol Fallback**: Automatically tests both HTTPS and HTTP for each subdomain.
+- **Customizable Configuration**:
+  - Adjust thread counts, batch sizes, and rate limits.
+  - Configure proxies with secure credential handling via environment variables.
+  - Set custom HTTP headers and SSL verification options.
+- **Input Validation**: Validates the target domain and subdomains before scanning.
+- **Detailed Output**:
+  - Color-coded console output with a progress bar.
+  - Export results to JSON, CSV, or HTML formats.
+- **Web-Accessible Reports**: Generates HTML reports with tables, charts, and explanations.
+- **Extensibility**: Allows customization of HTTP status codes and protocols.
+- **Error Handling**: Manages timeouts, connection errors, and invalid inputs gracefully.
+- **Unit Tests**: Includes a basic test suite for core functionality verification.
+
+---
+
+## Installation
+
+Follow these steps to set up the `SubdomainScanner` tool on your system:
+
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/yourusername/SubdomainScanner.git
+   cd SubdomainScanner
+   ```
+
+2. **Install Dependencies**:
+   Ensure you have Python installed, then run:
+   ```bash
+   pip install -r requirements.txt
+   ```
+   The `requirements.txt` file should include:
+   ```
+   requests
+   colorama
+   tqdm
+   validators
+   beautifulsoup4
+   jinja2
+   requests-mock  # For testing
+   ```
+
+3. **Set Environment Variables (Optional)**:
+   If using proxies, configure credentials securely:
+   ```bash
+   export HTTPS_PROXY_USER='your_username'
+   export HTTPS_PROXY_PASS='your_password'
+   export HTTPS_PROXY_HOST='proxy.example.com'
+   export HTTPS_PROXY_PORT='8080'
+   ```
+
+---
+
+## Usage
+
+### Basic Usage
+To perform a simple subdomain scan with a predefined list:
+```python
+from subdomain_scanner import SubdomainScanner
+
+scanner = SubdomainScanner("example.com", subdomains_list=["www", "mail", "ftp"])
+scanner.run()
+```
+
+### Advanced Usage
+For more control, customize the scan with additional parameters:
+```python
+scanner = SubdomainScanner(
+    "example.com",
+    filename="subdomains.txt",
+    timeout=10,
+    valid_status_codes={200, 403},
+    protocols=["https"]
+)
+scanner.set_max_threads(20)\
+       .set_verbose(2)\
+       .set_output_file("results.json")\
+       .set_rate_limit(0.5)\
+       .set_proxies()  # Uses environment variables if not specified
+results = scanner.run()
+```
+
+### Generating Reports
+Create an HTML report with detailed visualizations:
+```python
+scanner = SubdomainScanner("example.com", filename="subdomains.txt")
+scanner.set_report_file("report.html")
+scanner.run()
+```
+- Open `report.html` in a browser to view:
+  - Scan summary.
+  - Charts of HTTP status code distribution and server types.
+  - A table listing subdomains with URLs, status codes, servers, and page titles.
+
+### Verbose Mode
+Enable detailed output during the scan:
+```python
+scanner.set_verbose(2)
+```
+- Displays:
+  - Invalid subdomain warnings.
+  - Detailed error messages (e.g., timeouts, connection issues).
+  - Information on each subdomain checked, even if not found.
+
+---
+
+## Verbose Usage Instructions
+
+Follow these detailed steps to use `SubdomainScanner` effectively:
+
+### Step 1: Prepare Subdomains
+- **Subdomain Source**: Provide subdomains via a Python list or a text file.
+  - **List Example**: `["www", "mail", "ftp"]`
+  - **File Example**: Create `subdomains.txt` with one subdomain per line:
+    ```
+    www
+    mail
+    ftp
+    ```
+
+### Step 2: Initialize the Scanner
+- Create a `SubdomainScanner` instance with your target domain:
+  ```python
+  scanner = SubdomainScanner("example.com", filename="subdomains.txt")
+  ```
+  - Or use a list directly:
+    ```python
+    scanner = SubdomainScanner("example.com", subdomains_list=["www", "mail"])
+    ```
+
+### Step 3: Configure Options (Optional)
+Customize the scanner for your needs:
+- **Threads**: Control concurrency (default: 10):
+  ```python
+  scanner.set_max_threads(20)
+  ```
+- **Timeout**: Set request timeout in seconds (default: 20):
+  ```python
+  scanner = SubdomainScanner("example.com", timeout=10)
+  ```
+- **Rate Limiting**: Add a delay between requests (in seconds):
+  ```python
+  scanner.set_rate_limit(0.5)
+  ```
+- **Proxies**: Configure proxies automatically or manually:
+  ```python
+  scanner.set_proxies()  # Pulls from environment variables
+  ```
+  or
+  ```python
+  scanner.set_proxies({'https': 'https://user:pass@proxy.example.com:8080'})
+  ```
+- **Custom Headers**: Define specific HTTP headers:
+  ```python
+  scanner.set_custom_headers({'User-Agent': 'Custom UA'})
+  ```
+- **SSL Verification**: Disable if needed (not recommended):
+  ```python
+  scanner.set_verify_ssl(False)
+  ```
+- **Output File**: Save results in JSON or CSV:
+  ```python
+  scanner.set_output_file("results.json")
+  ```
+- **Report File**: Generate an HTML report:
+  ```python
+  scanner.set_report_file("report.html")
+  ```
+
+### Step 4: Run the Scan
+- Start the scan and collect results:
+  ```python
+  results = scanner.run()
+  ```
+- The tool will:
+  - Validate inputs.
+  - Test subdomains with specified protocols.
+  - Show progress and results in the console (verbosity-dependent).
+  - Save outputs to files if configured.
+
+### Step 5: View Results
+- **Console Output**: Real-time updates and scan summary.
+- **Output File**: Check `results.json` or similar for detailed data.
+- **HTML Report**: Open `report.html` in a browser for a visual summary.
+
+---
+
+## Contributing
+
+We welcome contributions! To get started:
+1. Fork the repository.
+2. Create a feature branch (`git checkout -b feature-branch`).
+3. Commit your changes (`git commit -m 'Add new feature'`).
+4. Push to the branch (`git push origin feature-branch`).
+5. Submit a pull request.
+
+---
