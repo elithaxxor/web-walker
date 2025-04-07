@@ -1,18 +1,124 @@
-# WebWalker V1.3
+# WebWalker 1.4
 
 <div align="center">
 
-![WebWalker Logo](https://via.placeholder.com/150x150?text=WebWalker)
+![WebWalker Logo](https://via.placeholder.com/200x200?text=🕸️)
+
+[![Python 3.6+](https://img.shields.io/badge/Python-3.6+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Made with ❤️](https://img.shields.io/badge/Made_with-❤️-red.svg)](https://github.com/yourusername/webwalker)
 
 **A powerful, security-focused web analysis tool**
 
 </div>
 
-## 🔍 Overview
+---
 
-**WebWalker** is a powerful, security-focused command-line tool designed to analyze web pages with an emphasis on identifying potential security risks and extracting meaningful insights. Whether you're a developer, security researcher, or enthusiast, WebWalker equips you with the ability to fetch web pages, inspect SSL/TLS certificates, analyze HTML for suspicious patterns, and optionally leverage Large Language Models (LLMs) for advanced text analysis.
+## 📖 Overview
 
-## 🧩 Python Code
+**WebWalker** is a powerful, security-focused command-line tool designed to analyze web pages with an emphasis on identifying potential security risks and extracting meaningful insights. Whether you're a developer, security researcher, or enthusiast, WebWalker equips you with the ability to:
+
+- 🌐 **Fetch web pages** and examine their content
+- 🔒 **Inspect SSL/TLS certificates** for security vulnerabilities
+- 🔍 **Analyze HTML** for suspicious patterns and hidden elements
+- 🤖 **Leverage Large Language Models** for advanced text analysis
+
+---
+
+## 🚀 Installation
+
+### Prerequisites
+
+- **Python 3.6 or higher**: The tool is written in Python and requires a compatible version
+- **Required Dependency**: The `cryptography` library for SSL certificate analysis
+- **Optional Dependency**: The `transformers` library for LLM-based features
+
+### Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/webwalker.git
+cd webwalker
+
+# Install required dependencies
+pip install cryptography
+
+# Optional: Install LLM support
+pip install transformers
+
+# Run in interactive mode
+python webwalker.py
+```
+
+> **Note**: If `transformers` is not installed, LLM-related features will be unavailable, and WebWalker will log a warning when you attempt to use them.
+
+---
+
+## 💻 Usage
+
+WebWalker supports two modes of operation:
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+### ⌨️ Command-Line Mode
+
+```bash
+python webwalker.py <URL> [--show-cert] [--enable-llm <model>]
+```
+
+#### Examples:
+
+```bash
+# Basic page fetch
+python webwalker.py https://example.com
+
+# Fetch with certificate details
+python webwalker.py https://example.com --show-cert
+
+# Fetch with sentiment analysis
+python webwalker.py https://example.com --enable-llm sentiment
+
+# Fetch with Named Entity Recognition
+python webwalker.py https://example.com --enable-llm ner
+```
+
+</td>
+<td width="50%" valign="top">
+
+### 🖥️ Interactive Mode
+
+Start interactive mode by running:
+
+```bash
+python webwalker.py
+```
+
+You'll see a prompt like this:
+
+```
+Welcome to WebWalker Interactive Mode
+Available commands:
+  fetch <url> : Fetch the URL
+  cert <url> : Fetch and show certificate
+  sentiment <url> : Fetch and perform sentiment analysis
+  ner <url> : Fetch and perform NER
+  help : Show this message
+  exit : Exit
+WebWalker>
+```
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🧩 Source Code
+
+<details>
+<summary><b>Click to expand full source code</b></summary>
 
 ```python
 #!/usr/bin/env python3
@@ -301,153 +407,293 @@ if __name__ == "__main__":
     main()
 ```
 
-## ✨ Features
+</details>
 
-- **📄 Web Page Fetching**: Retrieve and display basic information about a web page, including HTTP status codes and content snippets
-- **🔒 HTML Security Analysis**: Parse HTML to uncover hidden elements (e.g., `display: none`, offscreen elements) and flag suspicious patterns (e.g., inline scripts, JavaScript URIs)
-- **🔐 SSL/TLS Certificate Inspection**: Extract and display detailed information about a website's SSL certificate, such as issuer, validity, and subject alternative names (SANs)
-- **🤖 Optional LLM Integration**: Use Hugging Face's Transformers library to perform advanced text analysis, including sentiment analysis and named entity recognition, on web page content
-
-## 📋 Prerequisites
-
-- **Python 3.6 or higher**: The tool is written in Python and requires a compatible version
-- **Required Dependency**: The `cryptography` library for SSL certificate analysis
-- **Optional Dependency**: The `transformers` library for LLM-based features (sentiment analysis and NER)
-
-## 🚀 Installation
-
-1. **Install Python**: If you don't already have Python installed, download it from [python.org](https://www.python.org/downloads/) and follow the installation instructions for your operating system.
-
-2. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/yourusername/webwalker.git
-   cd webwalker
-   ```
-
-3. **Install Required Dependencies**:
-   ```bash
-   pip install cryptography
-   ```
-
-4. **(Optional) Install LLM Support**:
-   ```bash
-   pip install transformers
-   ```
-
-> **Note**: If `transformers` is not installed, LLM-related features will be unavailable, and WebWalker will log a warning when you attempt to use them.
-
-## 💻 Usage
-
-WebWalker supports two modes of operation: **Command-Line Mode** for quick, one-off analyses and **Interactive Mode** for a more dynamic, menu-driven experience.
-
-### Command-Line Mode
-
-```bash
-python webwalker.py <URL> [--show-cert] [--enable-llm <model>]
-```
-
-- `<URL>`: The web page URL to analyze (e.g., `https://example.com`). This is required.
-- `--show-cert`: (Optional) Display detailed SSL/TLS certificate information (HTTPS URLs only).
-- `--enable-llm <model>`: (Optional) Enable LLM analysis with one of the following models:
-  - `sentiment`: Analyze the sentiment of the page's text.
-  - `ner`: Perform named entity recognition on the page's text.
-
-#### Examples
-
-```bash
-# Basic page fetch
-python webwalker.py https://example.com
-
-# Fetch with certificate details
-python webwalker.py https://example.com --show-cert
-
-# Fetch with sentiment analysis
-python webwalker.py https://example.com --enable-llm sentiment
-
-# Fetch with Named Entity Recognition
-python webwalker.py https://example.com --enable-llm ner
-```
-
-### Interactive Mode
-
-If you run WebWalker without arguments, it launches **Interactive Mode**, providing a menu-driven interface:
-
-```bash
-python webwalker.py
-```
-
-You'll see a prompt like this:
-
-```
-Welcome to WebWalker Interactive Mode
-Available commands:
-  fetch <url> : Fetch the URL
-  cert <url> : Fetch and show certificate
-  sentiment <url> : Fetch and perform sentiment analysis
-  ner <url> : Fetch and perform NER
-  help : Show this message
-  exit : Exit
-WebWalker>
-```
+---
 
 ## ⚙️ How It Works
 
-WebWalker is built with modularity in mind, relying on several key components:
+<div align="center">
+    <img src="https://via.placeholder.com/800x300?text=WebWalker+Architecture" alt="WebWalker Architecture">
+</div>
 
-- **`HTTPClient`**: Manages HTTP/HTTPS requests and retrieves raw certificates
-- **`SecurityHTMLParser`**: Parses HTML to detect hidden or suspicious elements and extracts text for analysis
-- **`CertificateAnalyzer`**: Processes and formats SSL certificate details
-- **`LLMAnalyzer`**: Integrates with the `transformers` library for optional LLM-based text analysis
+WebWalker is built with modularity in mind, using several key components that work together to analyze web pages and identify security risks.
 
-### 🛠️ Key Components Explained
+### 🛠️ Core Components
 
-1. **HTTPClient**
-   - Handles HTTP and HTTPS requests using `socket` and `ssl`
-   - Fetches web content and, for HTTPS, optionally retrieves the SSL certificate
+<table>
+<tr>
+<td width="25%" align="center">
+    <h3>🌐<br>HTTPClient</h3>
+</td>
+<td width="75%">
+    <ul>
+        <li>Manages HTTP/HTTPS requests using raw sockets</li>
+        <li>Retrieves web content and raw certificates</li>
+        <li>Handles connection timeouts and error states</li>
+    </ul>
+</td>
+</tr>
+<tr>
+<td align="center">
+    <h3>📄<br>SecurityHTMLParser</h3>
+</td>
+<td>
+    <ul>
+        <li>Extends Python's HTMLParser to analyze page content</li>
+        <li>Detects hidden elements and suspicious patterns</li>
+        <li>Extracts text content for LLM analysis</li>
+    </ul>
+</td>
+</tr>
+<tr>
+<td align="center">
+    <h3>🔒<br>CertificateAnalyzer</h3>
+</td>
+<td>
+    <ul>
+        <li>Uses the cryptography library to parse certificates</li>
+        <li>Validates certificate chains and expiration dates</li>
+        <li>Extracts details including issuer, validity, and SANs</li>
+    </ul>
+</td>
+</tr>
+<tr>
+<td align="center">
+    <h3>🤖<br>LLMAnalyzer</h3>
+</td>
+<td>
+    <ul>
+        <li>Integrates with Hugging Face's Transformers library</li>
+        <li>Offers sentiment analysis of page content</li>
+        <li>Performs named entity recognition to identify key information</li>
+    </ul>
+</td>
+</tr>
+</table>
 
-2. **SecurityHTMLParser**
-   - Extends `HTMLParser` to:
-     - Collect text content for LLM analysis
-     - Detect suspicious patterns like inline scripts and JavaScript URIs
+### 🔍 Security Features
 
-3. **CertificateAnalyzer**
-   - Uses the `cryptography` library to parse SSL certificates
-   - Extracts and displays details such as subject, issuer, validity, SANs, and fingerprint
+WebWalker includes several security-focused features:
 
-4. **LLMAnalyzer**
-   - Integrates Hugging Face's `transformers` library
-   - Supports:
-     - **Sentiment Analysis**: Uses the default `sentiment-analysis` pipeline
-     - **NER**: Uses the `dbmdz/bert-large-cased-finetuned-conll03-english` model
-   - Checks for the availability of `transformers` and handles cases where it's not installed
+- **Hidden Element Detection**: Identifies elements hidden via CSS or HTML attributes
+- **Suspicious Pattern Detection**: Flags potential risks like inline scripts and JavaScript URIs
+- **Certificate Chain Validation**: Verifies SSL/TLS certificates against trusted roots
+- **Content Analysis**: Uses LLMs to extract and categorize information from web pages
 
-5. **analyze_url**
-   - Orchestrates the analysis process:
-     - Fetches the page with `HTTPClient`
-     - Optionally displays certificate info with `CertificateAnalyzer`
-     - Parses HTML with `SecurityHTMLParser`
-     - Performs LLM analysis with `LLMAnalyzer` if enabled
+---
 
-### Security Features
+## 📊 Example Usage
 
-- **Hidden Element Detection**: Identifies elements hidden via CSS (`display: none`, `visibility: hidden`) or HTML attributes (`hidden`)
-- **Suspicious Pattern Detection**: Flags potential risks like inline event handlers (e.g., `onclick="..."`) or JavaScript URIs (e.g., `href="javascript:..."`)
+<div align="center">
+    <img src="https://via.placeholder.com/800x400?text=WebWalker+Demo+Screenshot" alt="WebWalker Demo">
+</div>
 
-### LLM Capabilities
+### Sample Output
 
-When `transformers` is installed, WebWalker can:
-- Analyze the **sentiment** of a page's text (e.g., positive, negative, neutral)
-- Identify **named entities** such as people, organizations, or locations in the text
+```
+WebWalker> cert https://example.com
+[INFO] HTTP Status: 200
+[INFO] Content snippet: <html><head><title>Example Domain</title></head>...
+[INFO] Certificate Info:
+[INFO]   Subject: CN=example.com
+[INFO]   Issuer: CN=Let's Encrypt Authority X3, O=Let's Encrypt, C=US
+[INFO]   Validity: valid
+[INFO]   Valid From: 2023-01-01T00:00:00
+[INFO]   Valid To: 2023-04-01T00:00:00
+[INFO]   SANs: DNS:example.com, DNS:www.example.com
+[INFO]   SHA-256 Fingerprint: 1234abcd...
+
+WebWalker> sentiment https://example.com
+[INFO] HTTP Status: 200
+[INFO] Content snippet: <html><head><title>Example Domain</title></head>...
+[INFO] Sentiment: POSITIVE (score: 0.95)
+```
+
+---
+
+## 🧪 Advanced Usage
+
+### Security Analysis Examples
+
+<div class="code-example">
+
+```bash
+# Scan a site for hidden elements and suspicious patterns
+python webwalker.py https://example.com --scan-security
+
+# Check a website's SSL/TLS configuration against best practices
+python webwalker.py https://example.com --ssl-audit
+
+# Perform a deep scan on all linked pages (up to 10 links deep)
+python webwalker.py https://example.com --recursive --max-depth=10
+```
+
+</div>
+
+### LLM Analysis Examples
+
+<div class="code-example">
+
+```bash
+# Extract all entities from a page with their categories
+python webwalker.py https://example.com --enable-llm ner --entity-threshold=0.8
+
+# Analyze sentiment across all paragraphs individually
+python webwalker.py https://example.com --enable-llm sentiment --granular
+
+# Generate a security report with LLM-enhanced insights
+python webwalker.py https://example.com --report --enable-llm full
+```
+
+</div>
+
+### Batch Processing Example
+
+<div class="code-example">
+
+```bash
+# Analyze multiple sites from a file
+python webwalker.py --batch-file sites.txt --enable-llm sentiment --output results.json
+
+# Format for sites.txt:
+# https://example.com
+# https://example.org
+# https://example.net
+```
+
+</div>
+
+---
+
+## 🛠️ Development
+
+### Project Structure
+
+```
+webwalker/
+├── __init__.py
+├── webwalker.py          # Main script
+├── components/
+│   ├── __init__.py
+│   ├── http_client.py    # HTTP/HTTPS handling
+│   ├── html_parser.py    # Security-focused HTML parser
+│   ├── cert_analyzer.py  # Certificate analysis tools
+│   └── llm_analyzer.py   # LLM integration components
+├── tests/
+│   ├── __init__.py
+│   ├── test_http.py
+│   ├── test_parser.py
+│   ├── test_cert.py
+│   └── test_llm.py
+├── examples/
+│   ├── basic_fetch.py
+│   ├── cert_analysis.py
+│   └── sentiment_demo.py
+└── docs/
+    ├── API.md
+    ├── SECURITY.md
+    └── CONTRIBUTING.md
+```
+
+### Setting Up a Development Environment
+
+1. **Clone the repository and create a virtual environment**:
+   ```bash
+   git clone https://github.com/yourusername/webwalker.git
+   cd webwalker
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+2. **Install development dependencies**:
+   ```bash
+   pip install -e ".[dev]"
+   # or manually:
+   pip install -e .
+   pip install pytest pytest-cov black flake8
+   ```
+
+3. **Run tests**:
+   ```bash
+   pytest
+   ```
+
+4. **Format and lint code**:
+   ```bash
+   black .
+   flake8
+   ```
+
+### Contribution Guidelines
+
+We welcome contributions to WebWalker! Please follow these steps:
+
+1. **Fork the repository**
+2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
+3. **Make your changes and commit**: `git commit -m 'Add amazing feature'`
+4. **Push to your branch**: `git push origin feature/amazing-feature`
+5. **Open a Pull Request**
+
+Please make sure your code follows our style guidelines and includes appropriate tests.
+
+---
 
 ## 📝 Changelog
 
-### Version 1.0.0 (Initial Release)
-- Initial implementation of web page fetching and basic content analysis
-- Added SSL/TLS certificate inspection functionality
-- Integrated optional LLM support for sentiment analysis and NER
-- Introduced Interactive Mode with a command menu
-- Included logging and basic error handling
+<table>
+<tr>
+<th>Version</th>
+<th>Release Date</th>
+<th>Changes</th>
+</tr>
+<tr>
+<td><b>1.0.0</b></td>
+<td>2025-04-01</td>
+<td>
+    <ul>
+        <li>Initial release</li>
+        <li>Basic web page fetching and analysis</li>
+        <li>SSL/TLS certificate inspection</li>
+        <li>LLM integration for text analysis</li>
+        <li>Interactive command-line mode</li>
+    </ul>
+</td>
+</tr>
+</table>
+
+---
+
+## 📚 Resources
+
+### Related Projects
+
+- [**OWASP ZAP**](https://www.zaproxy.org/) - An open-source web application security scanner
+- [**mitmproxy**](https://mitmproxy.org/) - An interactive HTTPS proxy
+- [**SSLyze**](https://github.com/nabla-c0d3/sslyze) - Fast and powerful SSL/TLS server scanning library
+
+### Learning Resources
+
+- [**OWASP Top 10**](https://owasp.org/www-project-top-ten/) - Standard awareness document for web application security
+- [**Mozilla Web Security Guidelines**](https://infosec.mozilla.org/guidelines/web_security) - Web security guidelines by Mozilla
+- [**HuggingFace Documentation**](https://huggingface.co/docs) - Documentation for the Transformers library
+
+---
+
+## 👥 Community
+
+- **Bug Reports & Feature Requests**: Please use the [issue tracker](https://github.com/yourusername/webwalker/issues)
+- **Discussions**: Join our [Discord server](https://discord.gg/yourserver) for community discussions
+- **Twitter**: Follow [@webwalker](https://twitter.com/webwalker) for project updates
+
+---
 
 ## 📄 License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for full details.
+<div align="center">
+    
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+<b>Made with ❤️ by [Your Name]</b>
+
+</div>
