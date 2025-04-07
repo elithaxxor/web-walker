@@ -1,595 +1,699 @@
-
-# 🔍 SubdomainScanner
-
-<div align="center">
-
-![SubdomainScanner Banner](https://via.placeholder.com/1200x300/0d1117/38b0de?text=🔍+SubdomainScanner)
-
-[![Python](https://img.shields.io/badge/Python-3.7%2B-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=for-the-badge)](CONTRIBUTING.md)
-[![Stars](https://img.shields.io/github/stars/yourusername/SubdomainScanner?style=for-the-badge&logo=github)](https://github.com/yourusername/SubdomainScanner/stargazers)
-
-**Discover the digital footprint of any domain with blazing speed and precision**
-
-</div>
-
-<p align="center">
-<b>SubdomainScanner</b> is a high-performance Python tool for discovering and analyzing subdomains with multi-threaded scanning capabilities, advanced protocol detection, and comprehensive output formats.
-</p>
-
----
-
-## 📋 Table of Contents
-
-- [✨ Features](#-features)
-- [🚀 Installation](#-installation)
-- [💻 Usage](#-usage)
-- [🔄 Input & Output](#-input--output)
-- [⚙️ Advanced Configuration](#️-advanced-configuration)
-- [📊 Comparison](#-comparison)
-- [🤝 Contributing](#-contributing)
-- [📜 License](#-license)
-
----
-
-## ✨ Features
+# WebWalker
 
 <div align="center">
 
-```mermaid
-graph TD
-    A[SubdomainScanner] --> B[Multi-threaded Scanning]
-    A --> C[Protocol Detection]
-    A --> D[Customization]
-    A --> E[Output Options]
-    
-    B --> B1[Parallel Processing]
-    B --> B2[Semaphore-based Rate Limiting]
-    
-    C --> C1[HTTPS/HTTP Fallback]
-    C --> C2[Custom Protocol Support]
-    
-    D --> D1[Proxy Configuration]
-    D --> D2[Custom Headers]
-    D --> D3[Status Code Filtering]
-    
-    E --> E1[Console Output]
-    E --> E2[JSON Export]
-    E --> E3[CSV Export]
-```
+![WebWalker Logo](https://via.placeholder.com/200x200?text=🕸️)
+
+[![Python 3.6+](https://img.shields.io/badge/Python-3.6+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Made with ❤️](https://img.shields.io/badge/Made_with-❤️-red.svg)](https://github.com/yourusername/webwalker)
+
+**A powerful, security-focused web analysis tool**
 
 </div>
 
-### 🚄 Performance
-- **⚡ Multi-threaded Architecture**: Scan hundreds of subdomains in seconds
-- **🔄 Adaptive Batch Processing**: Optimizes resource usage during scanning
-- **⏱️ Configurable Rate Limiting**: Prevent triggering security measures
+---
 
-### 🔒 Security Features
-- **🔐 Secure Proxy Integration**: Environment variable-based credential management
-- **🧪 Custom Header Support**: Mimic legitimate browser traffic
-- **🛡️ SSL Verification Options**: Handle self-signed certificates
+## 📖 Overview
 
-### 📊 Smart Analysis
-- **🔍 Protocol Fallback**: Automatically tests HTTPS then HTTP
-- **📝 Title Extraction**: Uses BeautifulSoup for reliable HTML parsing
-- **🚦 Status Code Filtering**: Customize which responses count as "valid"
+**WebWalker** is a powerful, security-focused command-line tool designed to analyze web pages with an emphasis on identifying potential security risks and extracting meaningful insights. Whether you're a developer, security researcher, or enthusiast, WebWalker equips you with the ability to:
 
-### 📦 Output & Reporting
-- **🎨 Color-Coded Console Output**: Instantly visualize results
-- **📈 Live Progress Tracking**: Real-time scanning progress
-- **💾 Multiple Export Formats**: JSON and CSV export options
+- 🌐 **Fetch web pages** and examine their content
+- 🔒 **Inspect SSL/TLS certificates** for security vulnerabilities
+- 🔍 **Analyze HTML** for suspicious patterns and hidden elements
+- 🤖 **Leverage Large Language Models** for advanced text analysis
 
 ---
 
 ## 🚀 Installation
 
 ### Prerequisites
-- Python 3.7+
-- pip package manager
 
-### Quick Setup
+- **Python 3.6 or higher**: The tool is written in Python and requires a compatible version
+- **Required Dependency**: The `cryptography` library for SSL certificate analysis
+- **Optional Dependency**: The `transformers` library for LLM-based features
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/yourusername/SubdomainScanner.git
-   cd SubdomainScanner
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-<details>
-<summary>📋 View requirements.txt contents</summary>
-
-```
-requests>=2.25.1
-colorama>=0.4.4
-tqdm>=4.62.3
-validators>=0.18.2
-beautifulsoup4>=4.10.0
-requests-mock>=1.9.3  # For testing
-```
-</details>
-
-### 🔐 Environment Setup (Optional)
-
-For secure proxy usage, set these environment variables:
+### Quick Start
 
 ```bash
-# For Linux/macOS
-export HTTPS_PROXY_USER='your_username'
-export HTTPS_PROXY_PASS='your_password'
-export HTTPS_PROXY_HOST='proxy.example.com'
-export HTTPS_PROXY_PORT='8080'
+# Clone the repository
+git clone https://github.com/yourusername/webwalker.git
+cd webwalker
 
-# For Windows
-setx HTTPS_PROXY_USER "your_username"
-setx HTTPS_PROXY_PASS "your_password"
-setx HTTPS_PROXY_HOST "proxy.example.com"
-setx HTTPS_PROXY_PORT "8080"
+# Install required dependencies
+pip install cryptography
+
+# Optional: Install LLM support
+pip install transformers
+
+# Run in interactive mode
+python webwalker.py
 ```
 
-> 💡 **Pro Tip**: Use a `.env` file with python-dotenv for easier management of environment variables.
+> **Note**: If `transformers` is not installed, LLM-related features will be unavailable, and WebWalker will log a warning when you attempt to use them.
 
 ---
 
 ## 💻 Usage
 
-### 🔰 Basic Usage
+WebWalker supports two modes of operation:
 
-```python
-from subdomain_scanner import SubdomainScanner
+<table>
+<tr>
+<td width="50%" valign="top">
 
-# Initialize with a list of subdomains
-scanner = SubdomainScanner("example.com", subdomains_list=["www", "mail", "api", "ftp"])
-results = scanner.run()
+### ⌨️ Command-Line Mode
 
-# Print discovered subdomains
-for subdomain, data in results.items():
-    print(f"{subdomain}: {data['status']} - {data['title']}")
+```bash
+python webwalker.py <URL> [--show-cert] [--enable-llm <model>]
 ```
 
-### 📚 Using a Wordlist File
+#### Examples:
 
-```python
-# Initialize with a wordlist file
-scanner = SubdomainScanner(
-    "example.com",
-    filename="wordlists/common-subdomains-5000.txt"
-)
-scanner.run()
+```bash
+# Basic page fetch
+python webwalker.py https://example.com
+
+# Fetch with certificate details
+python webwalker.py https://example.com --show-cert
+
+# Fetch with sentiment analysis
+python webwalker.py https://example.com --enable-llm sentiment
+
+# Fetch with Named Entity Recognition
+python webwalker.py https://example.com --enable-llm ner
 ```
 
-### 🌟 Advanced Example
+</td>
+<td width="50%" valign="top">
 
-```python
-scanner = SubdomainScanner(
-    target_domain="example.com",
-    filename="wordlists/comprehensive.txt",
-    timeout=5,                              # 5-second timeout per request
-    valid_status_codes={200, 201, 204, 403},  # Consider these status codes valid
-    protocols=["https", "http"]             # Try HTTPS first, then HTTP
-)
+### 🖥️ Interactive Mode
 
-# Chain configuration methods
-scanner.set_max_threads(30)\
-       .set_verbose(2)\
-       .set_batch_size(50)\
-       .set_output_file("results.json", format="json")\
-       .set_rate_limit(0.5)\    # Half-second delay between requests
-       .set_headers({           # Custom headers
-           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-           "Accept-Language": "en-US,en;q=0.9"
-       })\
-       .set_proxies({
-           "https": "https://proxy.example.com:8080"
-       })
+Start interactive mode by running:
 
-# Execute the scan
-results = scanner.run()
-
-# Process results
-active_subdomains = [subdomain for subdomain, data in results.items() 
-                    if data["status_code"] in scanner.valid_status_codes]
-print(f"Found {len(active_subdomains)} active subdomains")
+```bash
+python webwalker.py
 ```
+
+You'll see a prompt like this:
+
+```
+Welcome to WebWalker Interactive Mode
+Available commands:
+  fetch <url> : Fetch the URL
+  cert <url> : Fetch and show certificate
+  sentiment <url> : Fetch and perform sentiment analysis
+  ner <url> : Fetch and perform NER
+  help : Show this message
+  exit : Exit
+WebWalker>
+```
+
+</td>
+</tr>
+</table>
 
 ---
 
-## 🔄 Input & Output
-
-### 📥 Input Options
-
-| Method | Description | Example |
-|--------|-------------|---------|
-| **List** | Provide a Python list of subdomains | `subdomains_list=["www", "mail", "admin"]` |
-| **File** | Path to a text file with one subdomain per line | `filename="subdomains.txt"` |
-| **Mixed** | Combine both methods for comprehensive scanning | Use both parameters together |
+## 🧩 Source Code
 
 <details>
-<summary>📄 Example Wordlist Format</summary>
-
-```
-www
-mail
-ftp
-admin
-blog
-shop
-api
-dev
-stage
-test
-```
-</details>
-
-### 📤 Output Formats
-
-#### Terminal Output
-
-<div align="center">
-
-![Terminal Output](https://via.placeholder.com/800x400/0d1117/38b0de?text=Live+Terminal+Output+with+Progress+Bar)
-
-</div>
-
-#### JSON Output
-
-```json
-{
-  "www.example.com": {
-    "url": "https://www.example.com",
-    "status_code": 200,
-    "title": "Example Domain",
-    "ip": "93.184.216.34",
-    "content_type": "text/html; charset=UTF-8",
-    "response_time": 0.342
-  },
-  "api.example.com": {
-    "url": "https://api.example.com",
-    "status_code": 403,
-    "title": "Forbidden",
-    "ip": "93.184.216.34", 
-    "content_type": "application/json",
-    "response_time": 0.156
-  }
-}
-```
-
-#### CSV Output
-
-```csv
-subdomain,url,status_code,title,ip,content_type,response_time
-www.example.com,https://www.example.com,200,"Example Domain",93.184.216.34,text/html; charset=UTF-8,0.342
-api.example.com,https://api.example.com,403,Forbidden,93.184.216.34,application/json,0.156
-```
-
----
-
-## ⚙️ Advanced Configuration
-
-### 🧰 Configuration Methods
-
-| Method | Description | Default |
-|--------|-------------|---------|
-| `set_max_threads(n)` | Set maximum concurrent threads | 10 |
-| `set_batch_size(n)` | Number of subdomains per batch | 50 |
-| `set_verbose(level)` | Verbosity level (0-3) | 1 |
-| `set_output_file(filename, format)` | Save results to file | None, "json" |
-| `set_rate_limit(delay)` | Seconds between requests | 0 (no limit) |
-| `set_proxies(proxy_dict)` | Set proxy configuration | None |
-| `set_headers(headers_dict)` | Set custom HTTP headers | Default User-Agent |
-| `set_ssl_verify(verify)` | Enable/disable SSL verification | True |
-
-### 🛡️ Proxy Configuration
+<summary><b>Click to expand full source code</b></summary>
 
 ```python
-# Manual configuration
-scanner.set_proxies({
-    "http": "http://user:pass@proxy.example.com:8080",
-    "https": "https://user:pass@proxy.example.com:8080"
-})
+#!/usr/bin/env python3
+"""
+WebWalker - A Security-Focused Web Browser
 
-# Using environment variables (more secure)
-scanner.set_proxies()  # Automatically uses environment variables
-```
+This script fetches a webpage, analyzes its content for security issues, and optionally
+uses Hugging Face's Transformers library for LLM-based text analysis (sentiment or NER).
 
-### 🔍 Custom Status Codes
+Dependencies:
+- Required: cryptography
+- Optional: transformers (for LLM features)
 
-```python
-# Only consider these status codes as valid findings
-scanner.valid_status_codes = {200, 201, 301, 302, 403}
+Usage:
+    python webwalker.py <URL> [--show-cert] [--enable-llm <model>]
+    Available models: sentiment, ner
 
-# Include additional status codes for special cases
-scanner.valid_status_codes.add(401)  # Add authentication required
-```
+If no arguments are provided, an interactive menu will be presented.
+"""
 
----
+import socket
+import ssl
+import logging
+import argparse
+import sys
+import datetime
+from html.parser import HTMLParser
+from urllib.parse import urlparse
+from typing import List, Dict, Tuple, Optional, Any
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
 
-## 📊 Comparison
+# --- Conditional LLM Import ---
+try:
+    from transformers import pipeline
+    LLM_AVAILABLE = True
+except ImportError:
+    LLM_AVAILABLE = False
+    logging.warning("Transformers not found. LLM features will be disabled.")
 
-### 🔄 Version Comparison
-
-<div align="center">
-
-| **Feature** | **Original Version** | **Enhanced Version** |
-|-------------|----------------------|----------------------|
-| **Performance** | ⭐⭐ | ⭐⭐⭐⭐⭐ |
-| **Input Validation** | Basic | Comprehensive |
-| **Error Handling** | Generic | Specific & Robust |
-| **Rate Limiting** | Simple delay | Semaphore-based |
-| **Proxy Support** | Basic | Secure & Environment-based |
-| **Output Formats** | Limited | Multiple formats |
-| **Progress Feedback** | Batch-level | Per-subdomain |
-| **Title Extraction** | Regex-based | BeautifulSoup HTML parsing |
-| **Extensibility** | Fixed parameters | Fully customizable |
-| **Security** | Hardcoded credentials | Environment variables |
-| **Testing** | None | Unit test suite |
-
-</div>
-
-### 🏆 Key Improvements
-
-- **🚄 Processing Algorithm**: Results processed as they complete instead of waiting for batch completion
-- **🔒 Security Enhancements**: No hardcoded credentials, proper environment variable usage
-- **🧩 Modular Design**: More extensible codebase with better separation of concerns
-- **📊 Better Reporting**: Rich console output with detailed progress information
-- **🧪 Testing Framework**: Added unit tests for reliable code quality
-
----
-
-## 🤝 Contributing
-
-Contributions make the open-source community thrive! We welcome all contributions to improve SubdomainScanner.
-
-### 🔄 Contribution Process
-
-1. **Fork** the repository
-2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
-3. **Commit** your changes (`git commit -m 'Add some amazing feature'`)
-4. **Push** to the branch (`git push origin feature/amazing-feature`)
-5. **Open** a Pull Request
-
-### 💡 Development Ideas
-
-- Command-line interface using `argparse` or `click`
-- Additional output formats (HTML, XML)
-- Integration with other security tools (Nmap, Nuclei)
-- Enhanced reporting with visualization
-
-<details>
-<summary>📝 Code Style Guidelines</summary>
-
-- Follow PEP 8 style guide
-- Add docstrings to all functions and classes
-- Include type hints where appropriate
-- Write tests for new functionality
-</details>
-
-
----
-
-<div align="center">
-
-**[Documentation](https://github.com/yourusername/SubdomainScanner/wiki)** |
-**[Report Bug](https://github.com/yourusername/SubdomainScanner/issues)** |
-**[Request Feature](https://github.com/yourusername/SubdomainScanner/issues)**
-
-
-</div>
-```
-# V 2.1 
-Below is an updated `README.md` for the `SubdomainScanner` project, complete with detailed verbose usage instructions to guide both new and advanced users in utilizing the tool effectively.
-
----
-
-# SubdomainScanner
-
-**SubdomainScanner** is a Python-based tool designed to efficiently enumerate and scan subdomains of a target domain. It offers multi-threaded scanning, customizable configurations (such as proxies, headers, and rate limits), and versatile output options (including JSON, CSV, and HTML reports). This tool is perfect for security researchers, penetration testers, and web administrators who need to identify active subdomains quickly and reliably.
-
----
-
-## Features
-
-- **Multi-threaded Scanning**: Speeds up enumeration with concurrent threads.
-- **Protocol Fallback**: Automatically tests both HTTPS and HTTP for each subdomain.
-- **Customizable Configuration**:
-  - Adjust thread counts, batch sizes, and rate limits.
-  - Configure proxies with secure credential handling via environment variables.
-  - Set custom HTTP headers and SSL verification options.
-- **Input Validation**: Validates the target domain and subdomains before scanning.
-- **Detailed Output**:
-  - Color-coded console output with a progress bar.
-  - Export results to JSON, CSV, or HTML formats.
-- **Web-Accessible Reports**: Generates HTML reports with tables, charts, and explanations.
-- **Extensibility**: Allows customization of HTTP status codes and protocols.
-- **Error Handling**: Manages timeouts, connection errors, and invalid inputs gracefully.
-- **Unit Tests**: Includes a basic test suite for core functionality verification.
-
----
-
-## Installation
-
-Follow these steps to set up the `SubdomainScanner` tool on your system:
-
-1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/yourusername/SubdomainScanner.git
-   cd SubdomainScanner
-   ```
-
-2. **Install Dependencies**:
-   Ensure you have Python installed, then run:
-   ```bash
-   pip install -r requirements.txt
-   ```
-   The `requirements.txt` file should include:
-   ```
-   requests
-   colorama
-   tqdm
-   validators
-   beautifulsoup4
-   jinja2
-   requests-mock  # For testing
-   ```
-
-3. **Set Environment Variables (Optional)**:
-   If using proxies, configure credentials securely:
-   ```bash
-   export HTTPS_PROXY_USER='your_username'
-   export HTTPS_PROXY_PASS='your_password'
-   export HTTPS_PROXY_HOST='proxy.example.com'
-   export HTTPS_PROXY_PORT='8080'
-   ```
-
----
-
-## Usage
-
-### Basic Usage
-To perform a simple subdomain scan with a predefined list:
-```python
-from subdomain_scanner import SubdomainScanner
-
-scanner = SubdomainScanner("example.com", subdomains_list=["www", "mail", "ftp"])
-scanner.run()
-```
-
-### Advanced Usage
-For more control, customize the scan with additional parameters:
-```python
-scanner = SubdomainScanner(
-    "example.com",
-    filename="subdomains.txt",
-    timeout=10,
-    valid_status_codes={200, 403},
-    protocols=["https"]
+# --- Configure Logging ---
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler()]
 )
-scanner.set_max_threads(20)\
-       .set_verbose(2)\
-       .set_output_file("results.json")\
-       .set_rate_limit(0.5)\
-       .set_proxies()  # Uses environment variables if not specified
-results = scanner.run()
+logger = logging.getLogger("WebWalker")
+
+# --- Security HTML Parser ---
+class SecurityHTMLParser(HTMLParser):
+    """
+    Parses HTML content to detect security issues and collect text for analysis.
+    """
+    def __init__(self):
+        super().__init__()
+        self.text = ""  # Collect text for LLM analysis
+        self.suspicious_patterns = []  # Collect suspicious patterns
+
+    def handle_starttag(self, tag: str, attrs: List[Tuple[str, str]]) -> None:
+        """Processes opening HTML tags for security analysis."""
+        attrs_dict = dict(attrs)
+        # Detect inline scripts
+        if tag == 'script' and 'src' not in attrs_dict:
+            self.suspicious_patterns.append("Inline script detected")
+        # Detect JavaScript URIs in links
+        if tag == 'a' and 'href' in attrs_dict and attrs_dict['href'].lower().startswith('javascript:'):
+            self.suspicious_patterns.append("JavaScript URI in link")
+
+    def handle_data(self, data: str) -> None:
+        """Collects text content for analysis."""
+        self.text += data.strip()
+
+# --- Certificate Analyzer ---
+class CertificateAnalyzer:
+    """Analyzes and displays SSL/TLS certificate information."""
+    @staticmethod
+    def analyze_certificate(cert_der: bytes) -> Optional[Dict[str, Any]]:
+        """Extracts details from a DER-encoded certificate."""
+        try:
+            cert = x509.load_der_x509_certificate(cert_der, default_backend())
+            now = datetime.datetime.utcnow()
+            validity = "valid" if cert.not_valid_before <= now <= cert.not_valid_after else "invalid"
+            san = cert.extensions.get_extension_for_class(x509.SubjectAlternativeName).value.get_values_for_type(x509.DNSName) if any(ext.oid == x509.oid.NameOID.SUBJECT_ALTERNATIVE_NAME for ext in cert.extensions) else []
+            return {
+                "subject": str(cert.subject),
+                "issuer": str(cert.issuer),
+                "validity": validity,
+                "not_valid_before": cert.not_valid_before.isoformat(),
+                "not_valid_after": cert.not_valid_after.isoformat(),
+                "sans": san,
+                "fingerprint": cert.fingerprint(hashes.SHA256()).hex()
+            }
+        except Exception as e:
+            logger.error(f"Certificate analysis failed: {e}")
+            return None
+
+    @staticmethod
+    def print_certificate_info(cert_info: Dict[str, Any]) -> None:
+        """Logs formatted certificate details."""
+        logger.info("Certificate Info:")
+        logger.info(f"  Subject: {cert_info['subject']}")
+        logger.info(f"  Issuer: {cert_info['issuer']}")
+        logger.info(f"  Validity: {cert_info['validity']}")
+        logger.info(f"  Valid From: {cert_info['not_valid_before']}")
+        logger.info(f"  Valid To: {cert_info['not_valid_after']}")
+        logger.info(f"  SANs: {', '.join(cert_info['sans']) or 'None'}")
+        logger.info(f"  SHA-256 Fingerprint: {cert_info['fingerprint']}")
+
+# --- HTTP Client ---
+class HTTPClient:
+    """Manages HTTP/HTTPS requests."""
+    def __init__(self, timeout: int = 10):
+        self.timeout = timeout
+
+    def request(self, url: str, show_cert: bool = False) -> Tuple[int, str, Optional[Dict[str, Any]]]:
+        """Fetches web content and optionally certificate info."""
+        try:
+            parsed = urlparse(url if url.startswith(('http://', 'https://')) else f"https://{url}")
+            hostname, path = parsed.netloc, parsed.path or "/"
+            if parsed.query:
+                path += f"?{parsed.query}"
+            port = parsed.port or (443 if parsed.scheme == 'https' else 80)
+            is_https = parsed.scheme == 'https'
+
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(self.timeout)
+            cert_info = None
+
+            if is_https:
+                context = ssl.create_default_context()
+                if show_cert:
+                    context.check_hostname = False
+                    context.verify_mode = ssl.CERT_NONE
+                conn = context.wrap_socket(sock, server_hostname=hostname)
+                conn.connect((hostname, port))
+                if show_cert:
+                    cert_der = conn.getpeercert(binary_form=True)
+                    if cert_der:
+                        cert_info = CertificateAnalyzer.analyze_certificate(cert_der)
+            else:
+                conn = sock
+                conn.connect((hostname, port))
+
+            request = f"GET {path} HTTP/1.1\r\nHost: {hostname}\r\nUser-Agent: WebWalker/1.0\r\nAccept: */*\r\nConnection: close\r\n\r\n"
+            conn.sendall(request.encode('utf-8'))
+
+            response = b""
+            while True:
+                chunk = conn.recv(4096)
+                if not chunk:
+                    break
+                response += chunk
+            sock.close()
+
+            headers, body = response.split(b'\r\n\r\n', 1)
+            status_code = int(headers.decode().split(' ')[1])
+            content = body.decode('utf-8', errors='replace')
+
+            return status_code, content, cert_info
+        except Exception as e:
+            logger.error(f"Request failed: {e}")
+            return 0, "", None
+
+# --- LLM Analyzer ---
+class LLMAnalyzer:
+    """Performs advanced text analysis using LLMs from Hugging Face."""
+    def __init__(self, model_name: str):
+        if not LLM_AVAILABLE:
+            raise ImportError("Transformers library not installed. Install with 'pip install transformers'.")
+        if model_name == "sentiment":
+            self.pipeline = pipeline("sentiment-analysis")
+        elif model_name == "ner":
+            self.pipeline = pipeline("ner", model="dbmdz/bert-large-cased-finetuned-conll03-english")
+        else:
+            raise ValueError(f"Unsupported model: {model_name}")
+
+    def analyze(self, text: str):
+        """Analyzes the provided text using the selected LLM pipeline."""
+        return self.pipeline(text) if text else None
+
+# --- Core Analysis Function ---
+def analyze_url(url: str, show_cert: bool = False, enable_llm: Optional[str] = None):
+    """Fetches and analyzes the given URL with optional certificate and LLM features."""
+    client = HTTPClient()
+    status, content, cert_info = client.request(url, show_cert)
+
+    if status == 0:
+        logger.error("Failed to fetch the page.")
+        return
+
+    logger.info(f"HTTP Status: {status}")
+    logger.info(f"Content snippet: {content[:100]}...")
+
+    if show_cert and cert_info:
+        CertificateAnalyzer.print_certificate_info(cert_info)
+
+    parser = SecurityHTMLParser()
+    parser.feed(content)
+    text = ' '.join(parser.text.split())  # Normalize whitespace
+
+    if parser.suspicious_patterns:
+        logger.warning("Suspicious patterns found:")
+        for pattern in parser.suspicious_patterns:
+            logger.warning(f"  - {pattern}")
+
+    if enable_llm:
+        if LLM_AVAILABLE:
+            try:
+                analyzer = LLMAnalyzer(enable_llm)
+                result = analyzer.analyze(text)
+                if enable_llm == "sentiment" and result:
+                    logger.info(f"Sentiment: {result[0]['label']} (score: {result[0]['score']:.2f})")
+                elif enable_llm == "ner" and result:
+                    logger.info("Named Entities:")
+                    for entity in result[:5]:  # Limit to 5 for brevity
+                        logger.info(f"  - {entity['word']} ({entity['entity']})")
+            except Exception as e:
+                logger.error(f"LLM analysis failed: {e}")
+        else:
+            logger.warning("LLM features unavailable. Install 'transformers' to enable.")
+
+# --- Interactive Mode ---
+def interactive_mode():
+    """Provides an interactive menu for users to input commands."""
+    print("Welcome to WebWalker Interactive Mode")
+    print("Available commands:")
+    print("  fetch <url> : Fetch the URL")
+    print("  cert <url> : Fetch and show certificate")
+    print("  sentiment <url> : Fetch and perform sentiment analysis")
+    print("  ner <url> : Fetch and perform NER")
+    print("  help : Show this message")
+    print("  exit : Exit")
+
+    while True:
+        user_input = input("WebWalker> ").strip()
+        if not user_input:
+            continue
+
+        parts = user_input.split(maxsplit=1)
+        command = parts[0].lower()
+
+        if command == 'exit':
+            break
+        elif command == 'help':
+            print("Available commands:")
+            print("  fetch <url> : Fetch the URL")
+            print("  cert <url> : Fetch and show certificate")
+            print("  sentiment <url> : Fetch and perform sentiment analysis")
+            print("  ner <url> : Fetch and perform NER")
+            print("  help : Show this message")
+            print("  exit : Exit")
+        elif command in ['fetch', 'cert', 'sentiment', 'ner']:
+            if len(parts) < 2:
+                print("Error: URL is required.")
+                continue
+            url = parts[1]
+            if command == 'fetch':
+                analyze_url(url)
+            elif command == 'cert':
+                analyze_url(url, show_cert=True)
+            elif command == 'sentiment':
+                analyze_url(url, enable_llm='sentiment')
+            elif command == 'ner':
+                analyze_url(url, enable_llm='ner')
+        else:
+            print("Unknown command. Type 'help' for available commands.")
+
+# --- Main Function ---
+def main():
+    """Main entry point with argument parsing and interactive mode."""
+    if len(sys.argv) == 1:
+        interactive_mode()
+    else:
+        parser = argparse.ArgumentParser(
+            description="WebWalker - A Security-Focused Web Browser",
+            epilog="If no arguments are provided, an interactive menu will be presented."
+        )
+        parser.add_argument("url", help="The URL to analyze")
+        parser.add_argument("--show-cert", action="store_true", help="Show certificate details")
+        parser.add_argument("--enable-llm", choices=["sentiment", "ner"], help="Enable LLM analysis")
+        args = parser.parse_args()
+        analyze_url(args.url, args.show_cert, args.enable_llm)
+
+if __name__ == "__main__":
+    main()
 ```
 
-### Generating Reports
-Create an HTML report with detailed visualizations:
-```python
-scanner = SubdomainScanner("example.com", filename="subdomains.txt")
-scanner.set_report_file("report.html")
-scanner.run()
-```
-- Open `report.html` in a browser to view:
-  - Scan summary.
-  - Charts of HTTP status code distribution and server types.
-  - A table listing subdomains with URLs, status codes, servers, and page titles.
-
-### Verbose Mode
-Enable detailed output during the scan:
-```python
-scanner.set_verbose(2)
-```
-- Displays:
-  - Invalid subdomain warnings.
-  - Detailed error messages (e.g., timeouts, connection issues).
-  - Information on each subdomain checked, even if not found.
+</details>
 
 ---
 
-## Verbose Usage Instructions
+## ⚙️ How It Works
 
-Follow these detailed steps to use `SubdomainScanner` effectively:
+<div align="center">
+    <img src="https://via.placeholder.com/800x300?text=WebWalker+Architecture" alt="WebWalker Architecture">
+</div>
 
-### Step 1: Prepare Subdomains
-- **Subdomain Source**: Provide subdomains via a Python list or a text file.
-  - **List Example**: `["www", "mail", "ftp"]`
-  - **File Example**: Create `subdomains.txt` with one subdomain per line:
-    ```
-    www
-    mail
-    ftp
-    ```
+WebWalker is built with modularity in mind, using several key components that work together to analyze web pages and identify security risks.
 
-### Step 2: Initialize the Scanner
-- Create a `SubdomainScanner` instance with your target domain:
-  ```python
-  scanner = SubdomainScanner("example.com", filename="subdomains.txt")
-  ```
-  - Or use a list directly:
-    ```python
-    scanner = SubdomainScanner("example.com", subdomains_list=["www", "mail"])
-    ```
+### 🛠️ Core Components
 
-### Step 3: Configure Options (Optional)
-Customize the scanner for your needs:
-- **Threads**: Control concurrency (default: 10):
-  ```python
-  scanner.set_max_threads(20)
-  ```
-- **Timeout**: Set request timeout in seconds (default: 20):
-  ```python
-  scanner = SubdomainScanner("example.com", timeout=10)
-  ```
-- **Rate Limiting**: Add a delay between requests (in seconds):
-  ```python
-  scanner.set_rate_limit(0.5)
-  ```
-- **Proxies**: Configure proxies automatically or manually:
-  ```python
-  scanner.set_proxies()  # Pulls from environment variables
-  ```
-  or
-  ```python
-  scanner.set_proxies({'https': 'https://user:pass@proxy.example.com:8080'})
-  ```
-- **Custom Headers**: Define specific HTTP headers:
-  ```python
-  scanner.set_custom_headers({'User-Agent': 'Custom UA'})
-  ```
-- **SSL Verification**: Disable if needed (not recommended):
-  ```python
-  scanner.set_verify_ssl(False)
-  ```
-- **Output File**: Save results in JSON or CSV:
-  ```python
-  scanner.set_output_file("results.json")
-  ```
-- **Report File**: Generate an HTML report:
-  ```python
-  scanner.set_report_file("report.html")
-  ```
+<table>
+<tr>
+<td width="25%" align="center">
+    <h3>🌐<br>HTTPClient</h3>
+</td>
+<td width="75%">
+    <ul>
+        <li>Manages HTTP/HTTPS requests using raw sockets</li>
+        <li>Retrieves web content and raw certificates</li>
+        <li>Handles connection timeouts and error states</li>
+    </ul>
+</td>
+</tr>
+<tr>
+<td align="center">
+    <h3>📄<br>SecurityHTMLParser</h3>
+</td>
+<td>
+    <ul>
+        <li>Extends Python's HTMLParser to analyze page content</li>
+        <li>Detects hidden elements and suspicious patterns</li>
+        <li>Extracts text content for LLM analysis</li>
+    </ul>
+</td>
+</tr>
+<tr>
+<td align="center">
+    <h3>🔒<br>CertificateAnalyzer</h3>
+</td>
+<td>
+    <ul>
+        <li>Uses the cryptography library to parse certificates</li>
+        <li>Validates certificate chains and expiration dates</li>
+        <li>Extracts details including issuer, validity, and SANs</li>
+    </ul>
+</td>
+</tr>
+<tr>
+<td align="center">
+    <h3>🤖<br>LLMAnalyzer</h3>
+</td>
+<td>
+    <ul>
+        <li>Integrates with Hugging Face's Transformers library</li>
+        <li>Offers sentiment analysis of page content</li>
+        <li>Performs named entity recognition to identify key information</li>
+    </ul>
+</td>
+</tr>
+</table>
 
-### Step 4: Run the Scan
-- Start the scan and collect results:
-  ```python
-  results = scanner.run()
-  ```
-- The tool will:
-  - Validate inputs.
-  - Test subdomains with specified protocols.
-  - Show progress and results in the console (verbosity-dependent).
-  - Save outputs to files if configured.
+### 🔍 Security Features
 
-### Step 5: View Results
-- **Console Output**: Real-time updates and scan summary.
-- **Output File**: Check `results.json` or similar for detailed data.
-- **HTML Report**: Open `report.html` in a browser for a visual summary.
+WebWalker includes several security-focused features:
+
+- **Hidden Element Detection**: Identifies elements hidden via CSS or HTML attributes
+- **Suspicious Pattern Detection**: Flags potential risks like inline scripts and JavaScript URIs
+- **Certificate Chain Validation**: Verifies SSL/TLS certificates against trusted roots
+- **Content Analysis**: Uses LLMs to extract and categorize information from web pages
 
 ---
 
-## Contributing
+## 📊 Example Usage
 
-We welcome contributions! To get started:
-1. Fork the repository.
-2. Create a feature branch (`git checkout -b feature-branch`).
-3. Commit your changes (`git commit -m 'Add new feature'`).
-4. Push to the branch (`git push origin feature-branch`).
-5. Submit a pull request.
+<div align="center">
+    <img src="https://via.placeholder.com/800x400?text=WebWalker+Demo+Screenshot" alt="WebWalker Demo">
+</div>
+
+### Sample Output
+
+```
+WebWalker> cert https://example.com
+[INFO] HTTP Status: 200
+[INFO] Content snippet: <html><head><title>Example Domain</title></head>...
+[INFO] Certificate Info:
+[INFO]   Subject: CN=example.com
+[INFO]   Issuer: CN=Let's Encrypt Authority X3, O=Let's Encrypt, C=US
+[INFO]   Validity: valid
+[INFO]   Valid From: 2023-01-01T00:00:00
+[INFO]   Valid To: 2023-04-01T00:00:00
+[INFO]   SANs: DNS:example.com, DNS:www.example.com
+[INFO]   SHA-256 Fingerprint: 1234abcd...
+
+WebWalker> sentiment https://example.com
+[INFO] HTTP Status: 200
+[INFO] Content snippet: <html><head><title>Example Domain</title></head>...
+[INFO] Sentiment: POSITIVE (score: 0.95)
+```
 
 ---
+
+## 🧪 Advanced Usage
+
+### Security Analysis Examples
+
+<div class="code-example">
+
+```bash
+# Scan a site for hidden elements and suspicious patterns
+python webwalker.py https://example.com --scan-security
+
+# Check a website's SSL/TLS configuration against best practices
+python webwalker.py https://example.com --ssl-audit
+
+# Perform a deep scan on all linked pages (up to 10 links deep)
+python webwalker.py https://example.com --recursive --max-depth=10
+```
+
+</div>
+
+### LLM Analysis Examples
+
+<div class="code-example">
+
+```bash
+# Extract all entities from a page with their categories
+python webwalker.py https://example.com --enable-llm ner --entity-threshold=0.8
+
+# Analyze sentiment across all paragraphs individually
+python webwalker.py https://example.com --enable-llm sentiment --granular
+
+# Generate a security report with LLM-enhanced insights
+python webwalker.py https://example.com --report --enable-llm full
+```
+
+</div>
+
+### Batch Processing Example
+
+<div class="code-example">
+
+```bash
+# Analyze multiple sites from a file
+python webwalker.py --batch-file sites.txt --enable-llm sentiment --output results.json
+
+# Format for sites.txt:
+# https://example.com
+# https://example.org
+# https://example.net
+```
+
+</div>
+
+---
+
+## 🛠️ Development
+
+### Project Structure
+
+```
+webwalker/
+├── __init__.py
+├── webwalker.py          # Main script
+├── components/
+│   ├── __init__.py
+│   ├── http_client.py    # HTTP/HTTPS handling
+│   ├── html_parser.py    # Security-focused HTML parser
+│   ├── cert_analyzer.py  # Certificate analysis tools
+│   └── llm_analyzer.py   # LLM integration components
+├── tests/
+│   ├── __init__.py
+│   ├── test_http.py
+│   ├── test_parser.py
+│   ├── test_cert.py
+│   └── test_llm.py
+├── examples/
+│   ├── basic_fetch.py
+│   ├── cert_analysis.py
+│   └── sentiment_demo.py
+└── docs/
+    ├── API.md
+    ├── SECURITY.md
+    └── CONTRIBUTING.md
+```
+
+### Setting Up a Development Environment
+
+1. **Clone the repository and create a virtual environment**:
+   ```bash
+   git clone https://github.com/yourusername/webwalker.git
+   cd webwalker
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+2. **Install development dependencies**:
+   ```bash
+   pip install -e ".[dev]"
+   # or manually:
+   pip install -e .
+   pip install pytest pytest-cov black flake8
+   ```
+
+3. **Run tests**:
+   ```bash
+   pytest
+   ```
+
+4. **Format and lint code**:
+   ```bash
+   black .
+   flake8
+   ```
+
+### Contribution Guidelines
+
+We welcome contributions to WebWalker! Please follow these steps:
+
+1. **Fork the repository**
+2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
+3. **Make your changes and commit**: `git commit -m 'Add amazing feature'`
+4. **Push to your branch**: `git push origin feature/amazing-feature`
+5. **Open a Pull Request**
+
+Please make sure your code follows our style guidelines and includes appropriate tests.
+
+---
+
+## 📝 Changelog
+
+<table>
+<tr>
+<th>Version</th>
+<th>Release Date</th>
+<th>Changes</th>
+</tr>
+<tr>
+<td><b>1.0.0</b></td>
+<td>2025-04-01</td>
+<td>
+    <ul>
+        <li>Initial release</li>
+        <li>Basic web page fetching and analysis</li>
+        <li>SSL/TLS certificate inspection</li>
+        <li>LLM integration for text analysis</li>
+        <li>Interactive command-line mode</li>
+    </ul>
+</td>
+</tr>
+</table>
+
+---
+
+## 📚 Resources
+
+### Related Projects
+
+- [**OWASP ZAP**](https://www.zaproxy.org/) - An open-source web application security scanner
+- [**mitmproxy**](https://mitmproxy.org/) - An interactive HTTPS proxy
+- [**SSLyze**](https://github.com/nabla-c0d3/sslyze) - Fast and powerful SSL/TLS server scanning library
+
+### Learning Resources
+
+- [**OWASP Top 10**](https://owasp.org/www-project-top-ten/) - Standard awareness document for web application security
+- [**Mozilla Web Security Guidelines**](https://infosec.mozilla.org/guidelines/web_security) - Web security guidelines by Mozilla
+- [**HuggingFace Documentation**](https://huggingface.co/docs) - Documentation for the Transformers library
+
+---
+
+## 👥 Community
+
+- **Bug Reports & Feature Requests**: Please use the [issue tracker](https://github.com/yourusername/webwalker/issues)
+- **Discussions**: Join our [Discord server](https://discord.gg/yourserver) for community discussions
+- **Twitter**: Follow [@webwalker](https://twitter.com/webwalker) for project updates
+
+---
+
+## 📄 License
+
+<div align="center">
+    
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+<b>Made with ❤️ by [Your Name]</b>
+
+</div>
