@@ -223,12 +223,12 @@ def interactive_mode():
     """Provides an interactive menu for users to input commands."""
     print("Welcome to WebWalker Interactive Mode")
     print("Available commands:")
-    print(" [!] fetch <url> : Fetch the URL")
-    print(" [!] cert <url> : Fetch and show certificate")
-    print(" [!] sentiment <url> : Fetch and perform sentiment analysis")
-    print(" [!] ner <url> : Fetch and perform NER")
-    print(" [!] help : Show this message")
-    print("  [!] exit : Exit")
+    print("  fetch <url> : Fetch the URL")
+    print("  cert <url> : Fetch and show certificate")
+    print("  sentiment <url> : Fetch and perform sentiment analysis")
+    print("  ner <url> : Fetch and perform NER")
+    print("  help : Show this message")
+    print("  exit : Exit")
 
     while True:
         user_input = input("WebWalker> ").strip()
@@ -242,12 +242,12 @@ def interactive_mode():
             break
         elif command == 'help':
             print("Available commands:")
-            print(" [!] fetch <url> : Fetch the URL")
-            print(" [!] cert <url> : Fetch and show certificate")
-            print(" [!] sentiment <url> : Fetch and perform sentiment analysis")
-            print(" [!] ner <url> : Fetch and perform NER")
-            print(" [!] help : Show this message")
-            print(" [!] exit : Exit")
+            print("  fetch <url> : Fetch the URL")
+            print("  cert <url> : Fetch and show certificate")
+            print("  sentiment <url> : Fetch and perform sentiment analysis")
+            print("  ner <url> : Fetch and perform NER")
+            print("  help : Show this message")
+            print("  exit : Exit")
         elif command in ['fetch', 'cert', 'sentiment', 'ner']:
             if len(parts) < 2:
                 print("Error: URL is required.")
