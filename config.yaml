@@ -1,0 +1,11 @@
+# Example configuration
+scan_timeout: 60
+network_interface: eth0
+tools:
+  - nmap
+  - enum4linux
+  - smbmap
+  - sublist3r
+tools_install_commands:
+  nmap: "apt-get install -y nmap"
+  enum4linux: "apt-get install -y enum4linux"
