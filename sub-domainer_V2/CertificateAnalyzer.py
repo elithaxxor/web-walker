@@ -53,3 +53,41 @@ class CertificateAnalyzer:
         print(f"  Valid To: {cert_info['not_valid_after']}")
         print(f"  SANs: {', '.join(cert_info['sans']) or 'None'}")
         print(f"  SHA-256 Fingerprint: {cert_info['fingerprint']}")
+    
+        try:
+            from transformers import pipeline
+            LLM_AVAILABLE = True
+        except ImportError:
+            LLM_AVAILABLE = False
+
+class LLMAnalyzer:
+    """Handles integration with Hugging Face's Transformers for text analysis."""
+    def __init__(self, model_name: str):
+        """Initialize the LLM analyzer with a specified model.
+        
+        Args:
+            model_name (str): The model type ('sentiment' or 'ner').
+        
+        Raises:
+            ImportError: If the transformers library is not installed.
+            ValueError: If an unsupported model name is provided.
+        """
+        if not LLM_AVAILABLE:
+            raise ImportError("Transformers library not installed. Install with 'pip install transformers'.")
+        if model_name == "sentiment":
+            self.pipeline = pipeline("sentiment-analysis")
+        elif model_name == "ner":
+            self.pipeline = pipeline("ner", model="dbmdz/bert-large-cased-finetuned-conll03-english")
+        else:
+            raise ValueError(f"Unsupported model: {model_name}")
+
+    def analyze(self, text: str) -> Any:
+        """Analyzes text using the specified LLM pipeline.
+        
+        Args:
+            text (str): The text to analyze.
+        
+        Returns:
+            Any: The analysis results (e.g., sentiment scores or NER entities).
+        """
+        return self.pipeline(text) if text else None
