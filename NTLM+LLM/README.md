@@ -1,4 +1,4 @@
-# WebWalker 1.4
+# WebWalker - LLM/Hugging-Face integration v1.4
 
 <div align="center">
 
