@@ -1,302 +1,305 @@
-import threading
-import requests
-import time
-import os
-import re
-import json
-import csv
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from colorama import Fore, init
-from tqdm import tqdm
-import validators
-from bs4 import BeautifulSoup
+#!/usr/bin/env python3
+"""
+WebWalker - A Security-Focused Web Analysis Tool
 
-# Initialize colorama for colored output
-init()
+This script fetches a webpage, analyzes its content for security issues, inspects SSL certificates,
+and optionally uses Hugging Face's Transformers for LLM-based text analysis (sentiment or NER).
 
-# Constants
-MAX_SUBDOMAIN_LENGTH = 63  # Maximum length of a subdomain per RFC 1035
-DEFAULT_VALID_STATUS_CODES = {200, 301, 302}  # Default HTTP status codes for "found" subdomains
-DEFAULT_PROTOCOLS = ["https", "http"]  # Default protocols to try
+Dependencies:
+- Required: cryptography
+- Optional: transformers (for LLM features)
 
-class SubdomainScanner:
-    def __init__(self, domain, filename=None, subdomains_list=None, timeout=20, 
-                 valid_status_codes=None, protocols=None):
-        """
-        Initialize the SubdomainScanner with the target domain and subdomain source.
+Usage:
+    python webwalker.py <URL> [--show-cert] [--enable-llm <model>]
+    Available models: sentiment, ner
 
-        Args:
-            domain (str): Target domain to scan (e.g., "example.com")
-            filename (str, optional): Path to file containing subdomains
-            subdomains_list (list, optional): List of subdomains instead of a file
-            timeout (int): Request timeout in seconds
-            valid_status_codes (set, optional): HTTP status codes considered as "found"
-            protocols (list, optional): Protocols to try (e.g., ["https", "http"])
+If no arguments are provided, an interactive menu will be presented.
+"""
 
-        Raises:
-            ValueError: If the domain is invalid or no subdomain source is provided
-        """
-        if not validators.domain(domain):
-            raise ValueError(f"Invalid domain: {domain}")
-        self.domain = domain
-        self.filename = filename
-        self.subdomains_list = subdomains_list
+# --- Imports and Dependencies ---
+import socket
+import ssl
+import logging
+import argparse
+import sys
+import datetime
+from html.parser import HTMLParser
+from urllib.parse import urlparse
+from typing import List, Dict, Tuple, Optional, Any
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+
+try:
+    from transformers import pipeline
+    LLM_AVAILABLE = True
+except ImportError:
+    LLM_AVAILABLE = False
+    logging.warning("Transformers library not found. LLM features will be disabled.")
+
+# --- Logging Configuration ---
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler()]
+)
+logger = logging.getLogger("WebWalker")
+
+# --- HTTP Client Class ---
+class HTTPClient:
+    """Handles HTTP/HTTPS requests and optionally retrieves SSL certificates."""
+    def __init__(self, timeout: int = 10):
         self.timeout = timeout
-        self.subdomains_found = []
-        self.subdomains_lock = threading.Lock()
 
-        # Colors for output
-        self.R = "\033[91m"  # Red
-        self.Y = "\033[93m"  # Yellow
-        self.G = "\033[92m"  # Green
-        self.C = "\033[96m"  # Cyan
-        self.W = "\033[0m"   # White/Reset
-
-        # Default settings
-        self.max_threads = 10
-        self.batch_size = 50
-        self.proxies = None  # For security, use environment variables for credentials
-        self.verbose = 1  # 0: quiet, 1: normal, 2: verbose
-        self.output_file = None
-        self.custom_headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-        self.verify_ssl = True
-        self.rate_limit_delay = 0  # Seconds between requests
-        self.total_subdomains = 0
-        self.progress_bar = None
-        self.semaphore = None  # For rate limiting across threads
-
-        # Extensibility: Allow custom status codes and protocols
-        self.valid_status_codes = valid_status_codes if valid_status_codes is not None else DEFAULT_VALID_STATUS_CODES
-        self.protocols = protocols if protocols is not None else DEFAULT_PROTOCOLS
-
-    def set_max_threads(self, max_threads):
-        """Set the maximum number of concurrent threads."""
-        self.max_threads = max_threads
-        return self
-
-    def set_batch_size(self, batch_size):
-        """Set the batch size for processing subdomains."""
-        self.batch_size = batch_size
-        return self
-
-    def set_proxies(self, proxies=None):
-        """
-        Set proxies for requests. If proxies are not provided, attempt to retrieve from environment variables.
-
-        Args:
-            proxies (dict, optional): Proxy settings to use. If None, environment variables are checked.
-
-        Environment Variables:
-            HTTPS_PROXY_USER: Proxy username
-            HTTPS_PROXY_PASS: Proxy password
-            HTTPS_PROXY_HOST: Proxy host
-            HTTPS_PROXY_PORT: Proxy port
-
-        Returns:
-            self: For method chaining
-        """
-        if proxies is None:
-            # Attempt to build proxies from environment variables
-            proxy_user = os.environ.get('HTTPS_PROXY_USER')
-            proxy_pass = os.environ.get('HTTPS_PROXY_PASS')
-            proxy_host = os.environ.get('HTTPS_PROXY_HOST')
-            proxy_port = os.environ.get('HTTPS_PROXY_PORT')
-            if proxy_host and proxy_port:
-                # Construct proxy URL if all required variables are present
-                proxy_url = f"https://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}" if proxy_user and proxy_pass else f"https://{proxy_host}:{proxy_port}"
-                self.proxies = {'https': proxy_url}
-            else:
-                self.proxies = None
-        else:
-            self.proxies = proxies
-        return self
-
-    def set_verbose(self, level):
-        """Set verbosity level (0: quiet, 1: normal, 2: verbose)."""
-        self.verbose = level
-        return self
-
-    def set_output_file(self, filename):
-        """Set output file to save results (supports .json and .csv)."""
-        self.output_file = filename
-        return self
-
-    def set_custom_headers(self, headers):
-        """Set custom HTTP headers for requests."""
-        self.custom_headers.update(headers)
-        return self
-
-    def set_verify_ssl(self, verify):
-        """Set whether to verify SSL certificates."""
-        self.verify_ssl = verify
-        return self
-
-    def set_rate_limit(self, delay):
-        """Set delay between requests in seconds and initialize semaphore if needed."""
-        self.rate_limit_delay = delay
-        if delay > 0:
-            self.semaphore = threading.Semaphore(self.max_threads)
-        return self
-
-    def validate_subdomain(self, subdomain):
-        """
-        Validate subdomain format per RFC 1035.
-
-        Returns:
-            bool: True if valid, False otherwise
-        """
-        if not subdomain or len(subdomain) > MAX_SUBDOMAIN_LENGTH:
-            return False
-        if not re.match(r'^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$', subdomain):
-            return False
-        return True
-
-    def _try_protocols(self, subdomain):
-        """Try different protocols for the subdomain and return the first successful response."""
-        for protocol in self.protocols:
-            url = f"{protocol}://{subdomain}.{self.domain}"
-            try:
-                response = requests.get(
-                    url,
-                    timeout=self.timeout,
-                    headers=self.custom_headers,
-                    proxies=self.proxies,
-                    verify=self.verify_ssl
-                )
-                if response.status_code in self.valid_status_codes:
-                    return response
-            except requests.exceptions.Timeout:
-                if self.verbose >= 2:
-                    print(f"{self.R}Timeout for {url}{self.W}")
-            except requests.exceptions.ConnectionError:
-                if self.verbose >= 2:
-                    print(f"{self.R}Connection error for {url}{self.W}")
-            except requests.exceptions.RequestException as e:
-                if self.verbose >= 2:
-                    print(f"{self.R}Request exception for {url}: {str(e)}{self.W}")
-        return None
-
-    def check_subdomain(self, subdomain):
-        """Check if a subdomain exists by sending HTTP/HTTPS requests."""
-        if not self.validate_subdomain(subdomain):
-            if self.verbose >= 2:
-                print(f"{self.R}Invalid subdomain format: {subdomain}{self.W}")
-            return
-
-        # Rate limiting with semaphore
-        if self.semaphore:
-            with self.semaphore:
-                time.sleep(self.rate_limit_delay)
-
-        response = self._try_protocols(subdomain)
-        if response:
-            with self.subdomains_lock:
-                self.subdomains_found.append({
-                    'url': response.url,
-                    'status_code': response.status_code,
-                    'server': response.headers.get('Server', 'Unknown'),
-                    'title': self._extract_title(response.text)
-                })
-                if self.verbose >= 1:
-                    print(f"{Fore.GREEN}Subdomain Found [+]: {response.url} (Status: {response.status_code}){Fore.RESET}")
-        elif self.verbose >= 2:
-            print(f"{Fore.YELLOW}No response from {subdomain}.{self.domain}{Fore.RESET}")
-
-    def _extract_title(self, html):
-        """Extract the title from HTML content using BeautifulSoup."""
+    def request(self, url: str, show_cert: bool = False) -> Tuple[int, str, Optional[Dict[str, Any]]]:
+        """Fetches a webpage and its SSL certificate if requested."""
         try:
-            soup = BeautifulSoup(html, 'html.parser')
-            return soup.title.string.strip() if soup.title else "No Title"
-        except Exception:
-            return "No Title"
+            # Parse URL, default to HTTPS if scheme is omitted
+            parsed = urlparse(url if url.startswith(('http://', 'https://')) else f"https://{url}")
+            hostname = parsed.netloc
+            path = parsed.path or "/"
+            if parsed.query:
+                path += f"?{parsed.query}"
+            port = parsed.port or (443 if parsed.scheme == 'https' else 80)
+            is_https = parsed.scheme == 'https'
 
-    def load_subdomains(self):
-        """Load and filter subdomains from file or list."""
-        if self.subdomains_list is not None:
-            subdomains = self.subdomains_list
-        elif self.filename is not None:
-            if not os.path.exists(self.filename):
-                raise FileNotFoundError(f"Subdomain file not found: {self.filename}")
-            with open(self.filename, "r") as file:
-                subdomains = [line.strip() for line in file.readlines() if line.strip()]
-        else:
-            raise ValueError("Either filename or subdomains_list must be provided")
+            # Set up socket
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(self.timeout)
+            cert_info = None
 
-        # Filter invalid subdomains
-        valid_subdomains = [sub for sub in subdomains if self.validate_subdomain(sub)]
-        if self.verbose >= 1 and len(valid_subdomains) < len(subdomains):
-            print(f"{self.Y}Filtered out {len(subdomains) - len(valid_subdomains)} invalid subdomains{self.W}")
-        return valid_subdomains
-
-    def scan(self):
-        """Scan subdomains using threading and return results."""
-        subdomains = self.load_subdomains()
-        self.total_subdomains = len(subdomains)
-
-        if self.verbose >= 1:
-            print(f"{self.Y}Starting subdomain scan for {self.domain} with {self.total_subdomains} subdomains...{self.W}")
-            print(f"{self.Y}Using {self.max_threads} threads{self.W}")
-
-        start_time = time.time()
-
-        with ThreadPoolExecutor(max_workers=self.max_threads) as executor:
-            futures = {executor.submit(self.check_subdomain, sub): sub for sub in subdomains}
-            if self.verbose >= 1:
-                self.progress_bar = tqdm(total=self.total_subdomains, desc="Scanning subdomains", unit="sub")
-            for future in as_completed(futures):
-                future.result()  # Wait for completion
-                if self.progress_bar:
-                    self.progress_bar.update(1)
-
-        if self.progress_bar:
-            self.progress_bar.close()
-
-        end_time = time.time()
-        elapsed_time = end_time - start_time
-
-        return {
-            "subdomains_scanned": self.total_subdomains,
-            "subdomains_found": self.subdomains_found,
-            "elapsed_time": elapsed_time
-        }
-
-    def print_results(self, results):
-        """Print scan results based on verbosity level."""
-        if self.verbose >= 1:
-            print(f"\n{self.C}Scan completed in {results['elapsed_time']:.2f} seconds{self.W}")
-            print(f"{self.G}Subdomains scanned: {results['subdomains_scanned']}{self.W}")
-            print(f"{self.G}Subdomains found: {len(results['subdomains_found'])}{self.W}")
-            for subdomain in results['subdomains_found']:
-                print(f"{self.G}{subdomain['url']} (Status: {subdomain['status_code']}, Title: {subdomain['title']}){self.W}")
-
-    def save_results(self, results):
-        """Save results to a file in JSON or CSV format if output_file is set."""
-        if self.output_file:
-            if self.output_file.endswith('.csv'):
-                # Save as CSV
-                with open(self.output_file, 'w', newline='') as f:
-                    writer = csv.writer(f)
-                    writer.writerow(['URL', 'Status Code', 'Server', 'Title'])
-                    for subdomain in results['subdomains_found']:
-                        writer.writerow([subdomain['url'], subdomain['status_code'], subdomain['server'], subdomain['title']])
+            # Handle HTTPS connection
+            if is_https:
+                context = ssl.create_default_context()
+                if show_cert:
+                    # Disable hostname verification to get cert even if invalid
+                    context.check_hostname = False
+                    context.verify_mode = ssl.CERT_NONE
+                conn = context.wrap_socket(sock, server_hostname=hostname)
+                conn.connect((hostname, port))
+                if show_cert:
+                    cert_der = conn.getpeercert(binary_form=True)
+                    if cert_der:
+                        cert_info = {"raw": cert_der}
             else:
-                # Save as JSON
-                with open(self.output_file, 'w') as f:
-                    json.dump(results, f, indent=4)
-            if self.verbose >= 1:
-                print(f"{self.Y}Results saved to {self.output_file}{self.W}")
+                conn = sock
+                conn.connect((hostname, port))
 
-    def run(self):
-        """Run the complete scan process and return results."""
-        results = self.scan()
-        self.print_results(results)
-        self.save_results(results)
-        return results
+            # Send HTTP GET request
+            request = (
+                f"GET {path} HTTP/1.1\r\n"
+                f"Host: {hostname}\r\n"
+                f"User-Agent: WebWalker/1.0\r\n"
+                f"Accept: */*\r\n"
+                f"Connection: close\r\n\r\n"
+            )
+            conn.sendall(request.encode('utf-8'))
 
-# Example usage
+            # Receive response
+            response = b""
+            while True:
+                chunk = conn.recv(4096)
+                if not chunk:
+                    break
+                response += chunk
+            sock.close()
+
+            # Parse response
+            headers, body = response.split(b'\r\n\r\n', 1)
+            status_code = int(headers.decode('utf-8', errors='replace').split(' ')[1])
+            content = body.decode('utf-8', errors='replace')
+
+            return status_code, content, cert_info
+        except Exception as e:
+            logger.error(f"Request to {url} failed: {e}")
+            return 0, "", None
+
+# --- Security HTML Parser Class ---
+class SecurityHTMLParser(HTMLParser):
+    """Parses HTML to extract text and detect suspicious patterns."""
+    def __init__(self):
+        super().__init__()
+        self.text = ""  # Accumulated text content
+        self.suspicious_patterns = []  # List of detected security issues
+
+    def handle_starttag(self, tag: str, attrs: List[Tuple[str, str]]) -> None:
+        """Checks for suspicious HTML patterns in tags."""
+        attrs_dict = dict(attrs)
+        if tag == 'script' and 'src' not in attrs_dict:
+            self.suspicious_patterns.append("Inline script detected")
+        if tag == 'a' and 'href' in attrs_dict and attrs_dict['href'].lower().startswith('javascript:'):
+            self.suspicious_patterns.append("JavaScript URI in link")
+
+    def handle_data(self, data: str) -> None:
+        """Collects text data from the HTML."""
+        self.text += data.strip()
+
+# --- Certificate Analyzer Class ---
+class CertificateAnalyzer:
+    """Analyzes and displays SSL certificate details."""
+    @staticmethod
+    def analyze_certificate(cert_der: bytes) -> Optional[Dict[str, Any]]:
+        """Extracts details from a DER-encoded SSL certificate."""
+        try:
+            cert = x509.load_der_x509_certificate(cert_der, default_backend())
+            now = datetime.datetime.utcnow()
+            validity = "valid" if cert.not_valid_before <= now <= cert.not_valid_after else "invalid"
+            # Check for SAN extension
+            san = []
+            for ext in cert.extensions:
+                if ext.oid == x509.oid.NameOID.SUBJECT_ALTERNATIVE_NAME:
+                    san = ext.value.get_values_for_type(x509.DNSName)
+                    break
+            return {
+                "subject": str(cert.subject),
+                "issuer": str(cert.issuer),
+                "validity": validity,
+                "not_valid_before": cert.not_valid_before.isoformat(),
+                "not_valid_after": cert.not_valid_after.isoformat(),
+                "sans": san,
+                "fingerprint": cert.fingerprint(hashes.SHA256()).hex()
+            }
+        except Exception as e:
+            logger.error(f"Certificate analysis failed: {e}")
+            return None
+
+    @staticmethod
+    def print_certificate_info(cert_info: Dict[str, Any]) -> None:
+        """Logs certificate details in a readable format."""
+        logger.info("Certificate Info:")
+        logger.info(f"  Subject: {cert_info['subject']}")
+        logger.info(f"  Issuer: {cert_info['issuer']}")
+        logger.info(f"  Validity: {cert_info['validity']}")
+        logger.info(f"  Valid From: {cert_info['not_valid_before']}")
+        logger.info(f"  Valid To: {cert_info['not_valid_after']}")
+        logger.info(f"  SANs: {', '.join(cert_info['sans']) or 'None'}")
+        logger.info(f"  SHA-256 Fingerprint: {cert_info['fingerprint']}")
+
+# --- LLM Analyzer Class ---
+class LLMAnalyzer:
+    """Handles integration with Hugging Face's Transformers for text analysis."""
+    def __init__(self, model_name: str):
+        if not LLM_AVAILABLE:
+            raise ImportError("Transformers library not installed. Install with 'pip install transformers'.")
+        if model_name == "sentiment":
+            self.pipeline = pipeline("sentiment-analysis")
+        elif model_name == "ner":
+            self.pipeline = pipeline("ner", model="dbmdz/bert-large-cased-finetuned-conll03-english")
+        else:
+            raise ValueError(f"Unsupported model: {model_name}")
+
+    def analyze(self, text: str) -> Any:
+        """Analyzes text using the specified LLM pipeline."""
+        return self.pipeline(text) if text else None
+
+# --- Core Analysis Function ---
+def analyze_url(url: str, show_cert: bool = False, enable_llm: Optional[str] = None) -> None:
+    """Fetches and analyzes a URL, including certificate and LLM analysis if requested."""
+    client = HTTPClient()
+    status, content, cert_info = client.request(url, show_cert)
+
+    if status == 0:
+        logger.error("Failed to fetch the page.")
+        return
+
+    logger.info(f"HTTP Status: {status}")
+    logger.info(f"Content snippet: {content[:100]}...")
+
+    # Analyze SSL certificate if requested
+    if show_cert and cert_info:
+        cert_details = CertificateAnalyzer.analyze_certificate(cert_info['raw'])
+        if cert_details:
+            CertificateAnalyzer.print_certificate_info(cert_details)
+
+    # Parse HTML for security issues and text extraction
+    parser = SecurityHTMLParser()
+    parser.feed(content)
+    text = ' '.join(parser.text.split())  # Normalize whitespace
+
+    if parser.suspicious_patterns:
+        logger.warning("Suspicious patterns found:")
+        for pattern in parser.suspicious_patterns:
+            logger.warning(f"  - {pattern}")
+
+    # Perform LLM analysis if enabled
+    if enable_llm:
+        if LLM_AVAILABLE:
+            try:
+                analyzer = LLMAnalyzer(enable_llm)
+                result = analyzer.analyze(text)
+                if enable_llm == "sentiment" and result:
+                    logger.info(f"Sentiment: {result[0]['label']} (score: {result[0]['score']:.2f})")
+                elif enable_llm == "ner" and result:
+                    logger.info("Named Entities:")
+                    for entity in result[:5]:  # Limit to 5 for brevity
+                        logger.info(f"  - {entity['word']} ({entity['entity']})")
+            except Exception as e:
+                logger.error(f"LLM analysis failed: {e}")
+        else:
+            logger.warning("LLM features unavailable. Install 'transformers' to enable.")
+
+# --- Interactive Mode Function ---
+def interactive_mode() -> None:
+    """Provides a menu-driven interface for interacting with WebWalker."""
+    print("Welcome to WebWalker Interactive Mode")
+    print("Available commands:")
+    print("  fetch <url> : Fetch the URL")
+    print("  cert <url> : Fetch and show certificate")
+    print("  sentiment <url> : Fetch and perform sentiment analysis")
+    print("  ner <url> : Fetch and perform NER")
+    print("  help : Show this message")
+    print("  exit : Exit")
+
+    while True:
+        user_input = input("WebWalker> ").strip()
+        if not user_input:
+            continue
+
+        parts = user_input.split(maxsplit=1)
+        command = parts[0].lower()
+
+        if command == 'exit':
+            print("Goodbye.")
+            break
+        elif command == 'help':
+            print("Available commands:")
+            print("  fetch <url> : Fetch the URL")
+            print("  cert <url> : Fetch and show certificate")
+            print("  sentiment <url> : Fetch and perform sentiment analysis")
+            print("  ner <url> : Fetch and perform NER")
+            print("  help : Show this message")
+            print("  exit : Exit")
+        elif command in ['fetch', 'cert', 'sentiment', 'ner']:
+            if len(parts) < 2:
+                print("Error: URL is required.")
+                continue
+            url = parts[1]
+            if command == 'fetch':
+                analyze_url(url)
+            elif command == 'cert':
+                analyze_url(url, show_cert=True)
+            elif command == 'sentiment':
+                analyze_url(url, enable_llm='sentiment')
+            elif command == 'ner':
+                analyze_url(url, enable_llm='ner')
+        else:
+            print("Unknown command. Type 'help' for available commands.")
+
+# --- Main Function ---
+def main() -> None:
+    """Entry point of the script, handling both CLI and interactive modes."""
+    if len(sys.argv) == 1:
+        interactive_mode()
+    else:
+        parser = argparse.ArgumentParser(
+            description="WebWalker - A Security-Focused Web Analysis Tool",
+            epilog="If no arguments are provided, an interactive menu will be presented."
+        )
+        parser.add_argument("url", help="The URL to analyze")
+        parser.add_argument("--show-cert", action="store_true", help="Show SSL certificate details")
+        parser.add_argument("--enable-llm", choices=["sentiment", "ner"], help="Enable LLM analysis")
+        args = parser.parse_args()
+        analyze_url(args.url, args.show_cert, args.enable_llm)
+
 if __name__ == "__main__":
-    scanner = SubdomainScanner("example.com", subdomains_list=["www", "mail", "invalid-sub"])
-    scanner.set_max_threads(5).set_verbose(2).set_output_file("results.csv").set_rate_limit(0.1)
-    results = scanner.run()
+    main()
