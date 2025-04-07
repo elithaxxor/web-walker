@@ -267,9 +267,9 @@ class SubdomainScanner:
         self.save_results(results)
         return results
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="Subdomain Scanner")
-    parser.add_argument("domain", help="Target domain to scan (e.g., 'example.com')")
+    parser.add_argument("domain", nargs='?', help="Target domain to scan (e.g., 'example.com')")
     parser.add_argument("-f", "--file", help="Path to file containing subdomains")
     parser.add_argument("-l", "--list", nargs='+', help="List of subdomains")
     parser.add_argument("-t", "--timeout", type=int, default=20, help="Request timeout in seconds")
@@ -286,27 +286,75 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    scanner = SubdomainScanner(
-        args.domain,
-        filename=args.file,
-        subdomains_list=args.list,
-        timeout=args.timeout,
-        valid_status_codes=set(args.status_codes) if args.status_codes else None,
-        protocols=args.protocols
-    )
+    if not args.domain:
+        print("No command-line arguments provided. Enter details through the menu.")
 
-    scanner.set_max_threads(args.max_threads) \
-           .set_batch_size(args.batch_size) \
-           .set_proxies(args.proxies) \
-           .set_verbose(args.verbose) \
-           .set_output_file(args.output) \
-           .set_rate_limit(args.rate_limit)
+        domain = input("Enter the target domain to scan (e.g., 'example.com'): ")
+        file = input("Enter the path to file containing subdomains (leave empty if not using a file): ")
+        subdomains_list = input("Enter the list of subdomains (comma-separated, leave empty if using a file): ").split(',')
+        timeout = int(input("Enter request timeout in seconds (default is 20): ") or 20)
+        status_codes = input("Enter HTTP status codes considered as 'found' (comma-separated, leave empty for defaults): ").split(',')
+        protocols = input("Enter protocols to try (space-separated, e.g., 'https http', leave empty for defaults): ").split()
+        max_threads = int(input("Enter the maximum number of concurrent threads (default is 10): ") or 10)
+        batch_size = int(input("Enter the batch size for processing subdomains (default is 50): ") or 50)
+        proxies = input("Enter proxy settings to use (leave empty if not using proxies): ")
+        verbose = int(input("Enter verbosity level (0: quiet, 1: normal, 2: verbose, default is 1): ") or 1)
+        output = input("Enter the output file to save results (supports .json and .csv, leave empty if not saving): ")
+        headers = input("Enter custom HTTP headers for requests (comma-separated key:value pairs, leave empty if not using): ").split(',')
+        verify_ssl = input("Verify SSL certificates? (y/n, default is n): ").lower() == 'y'
+        rate_limit = float(input("Enter delay between requests in seconds (default is 0): ") or 0)
 
-    if args.headers:
-        headers = dict(header.split(':') for header in args.headers)
-        scanner.set_custom_headers(headers)
+        status_codes = [int(code) for code in status_codes] if status_codes else None
+        headers = {header.split(':')[0].strip(): header.split(':')[1].strip() for header in headers} if headers else {}
 
-    if args.verify_ssl:
-        scanner.set_verify_ssl(args.verify_ssl)
+        scanner = SubdomainScanner(
+            domain,
+            filename=file or None,
+            subdomains_list=subdomains_list if subdomains_list != [''] else None,
+            timeout=timeout,
+            valid_status_codes=set(status_codes) if status_codes else None,
+            protocols=protocols if protocols else None
+        )
 
-    results = scanner.run()
+        scanner.set_max_threads(max_threads) \
+               .set_batch_size(batch_size) \
+               .set_proxies(proxies or None) \
+               .set_verbose(verbose) \
+               .set_output_file(output or None) \
+               .set_rate_limit(rate_limit)
+
+        if headers:
+            scanner.set_custom_headers(headers)
+
+        if verify_ssl:
+            scanner.set_verify_ssl(verify_ssl)
+
+        results = scanner.run()
+    else:
+        scanner = SubdomainScanner(
+            args.domain,
+            filename=args.file,
+            subdomains_list=args.list,
+            timeout=args.timeout,
+            valid_status_codes=set(args.status_codes) if args.status_codes else None,
+            protocols=args.protocols
+        )
+
+        scanner.set_max_threads(args.max_threads) \
+               .set_batch_size(args.batch_size) \
+               .set_proxies(args.proxies) \
+               .set_verbose(args.verbose) \
+               .set_output_file(args.output) \
+               .set_rate_limit(args.rate_limit)
+
+        if args.headers:
+            headers = dict(header.split(':') for header in args.headers)
+            scanner.set_custom_headers(headers)
+
+        if args.verify_ssl:
+            scanner.set_verify_ssl(args.verify_ssl)
+
+        results = scanner.run()
+
+if __name__ == "__main__":
+    main()
